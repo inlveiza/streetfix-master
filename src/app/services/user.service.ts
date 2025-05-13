@@ -19,7 +19,7 @@ import { Router } from '@angular/router';
 import { FirebaseError } from 'firebase/app';
 import { User } from '../interfaces/user.interface';
 
-@Injectable(
+@Injectable({
   providedIn: 'root'
 })
 export class UserService {
