@@ -1,0 +1,91 @@
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { UserService } from '../../services/user.service';
+
+@Component({
+  selector: 'app-sign-in',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './sign-in.component.html',
+  styleUrls: ['./sign-in.component.css']
+})
+export class SignInComponent implements OnInit {
+  signInForm: FormGroup;
+  isLoading = false;
+  showPassword = false;
+  showConfirmPassword = false;
+  successMessage = '';
+  errorMessage = '';
+
+  constructor(
+    private formBuilder: FormBuilder,
+    private router: Router,
+    private userService: UserService
+  ) {
+    this.signInForm = this.formBuilder.group({
+      email: ['', [Validators.required, this.strictEmailValidator.bind(this)]],
+      password: ['', [Validators.required, Validators.minLength(8)]]
+    });
+  }
+
+  ngOnInit() {
+    // Component initialization
+  }
+
+  strictEmailValidator(control: AbstractControl): ValidationErrors | null {
+    const email = control.value;
+    if (!email) return null;
+  
+    // Stricter regex for most real-world emails
+    const emailRegex = /^[a-zA-Z0-9](\.?[a-zA-Z0-9_-])*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+$/;
+    if (!emailRegex.test(email)) {
+      return { invalidEmail: true };
+    }
+  
+    return null;
+  }
+
+  getErrorMessage(field: string): string {
+    const control = this.signInForm.get(field);
+    if (!control || (!control.errors && !this.signInForm.errors)) return '';
+
+    if (control.errors?.['required']) return `${field} is required`;
+    if (control.errors?.['invalidEmail']) return 'Please enter a valid email (e.g., user@domain.com)';
+    if (control.errors?.['minlength']) {
+      const minLength = control.errors['minlength'].requiredLength;
+      return `${field} must be at least ${minLength} characters`;
+    }
+    return '';
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+
+  async onSubmit() {
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.signInForm.markAllAsTouched();
+
+    if (this.signInForm.valid) {
+      this.isLoading = true;
+      try {
+        const { email, password } = this.signInForm.value;
+        
+        // Attempt to sign in
+        await this.userService.signIn(email, password);
+        
+        // If successful, navigate to profile
+        this.router.navigate(['/profile']);
+      } catch (error: any) {
+        this.errorMessage = error.message || 'Invalid email or password';
+      } finally {
+        this.isLoading = false;
+      }
+    } else {
+      this.errorMessage = 'Please fill in all required fields correctly.';
+    }
+  }
+}

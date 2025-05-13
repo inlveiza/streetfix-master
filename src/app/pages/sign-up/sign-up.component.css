@@ -1,0 +1,205 @@
+.signup-container {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    margin: auto;
+    background-color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.curved-background {
+    position: relative;
+    width: 100%;
+    background-color: #2D796D;
+    border-radius: 0 0 100% 100%;
+    justify-content: center;
+}
+
+.status-bar {
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.time {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.status-icons {
+    display: flex;
+    gap: 4px;
+}
+
+.signal, .wifi, .battery {
+    width: 16px;
+    height: 16px;
+    background-color: white;
+}
+
+.logo-container {
+    position: relative;
+    width: 120px;
+    margin: 100px auto 80px;
+    z-index: 2;
+}
+
+.logo img {
+    width: 120%;
+    height: auto;
+    margin-bottom: 69px;
+}
+
+.form-card {
+    position: relative;
+    background-color: #F8FFF2;
+    border-radius: 24px;
+    padding: 24px;
+    width: 90%;
+    max-width: 340px;
+    margin-top: -100px;
+    z-index: 2;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    outline: 1px solid #3D8D7A;
+}
+
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.circle {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background-color: #2D796D;
+    border-radius: 50%;
+    opacity: 0.1;
+    top: -150px;
+    right: -150px;
+}
+
+h2 {
+    font-size: 24px;
+    color: #000;
+    margin-bottom: 24px;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.form-group {
+    position: relative;
+    margin-bottom: 16px;
+    z-index: 1;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #514F4F;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #FFFFFF;
+    color: #333;
+    transition: border-color 0.3s ease; 
+}
+
+.form-input.error { 
+    border-color: #dc3545;
+}
+
+.form-input::placeholder {
+    color: #888;
+}
+
+.password-input-container { 
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.toggle-password:hover {
+    color: #333;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    min-height: 20px;
+}
+
+.create-account-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #2D796D;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 8px;
+    position: relative;
+    z-index: 1;
+    transition: background-color 0.3s ease;
+}
+
+.create-account-btn:disabled {
+    background-color: #CCE0DD;
+    cursor: not-allowed;
+}
+
+.create-account-btn:not(:disabled):hover {
+    background-color: #236358;
+}
+
+.login-prompt {
+    margin-top: 16px;
+    color: #000;
+    font-size: 14px;
+    text-align: center;
+}
+
+.login-link {
+    color: #2D796D;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}

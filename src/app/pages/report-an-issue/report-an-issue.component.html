@@ -1,0 +1,171 @@
+<div class="profile-container">
+  <!-- Primary Header with Logo -->
+  <div class="primary-header">
+    <div class="logo-container">
+      <div class="logo-oval">
+        <img src="assets/streetfix-logo.png" alt="StreetFix Logo" class="logo">
+      </div>
+    </div>
+  </div>
+
+  <!-- Secondary Header with Navigation and Title -->
+  <div class="secondary-header">
+    <div class="nav-container">
+      <div class="nav-oval">
+        <a routerLink="/reports" class="nav-link" routerLinkActive="active">Reports</a>
+        <a routerLink="/profile" class="nav-link" routerLinkActive="active">Profile</a>
+      </div>
+      <button class="nav-arrow" routerLink="/reports">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+    </div>
+    <h1 class="reports-title">REPORT AN ISSUE</h1>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="report-form-container">
+      <div class="user-info">
+        <i class="fas fa-user-circle"></i>
+        <span>{{ username }}</span>
+      </div>
+
+      <!-- Error Alert -->
+      <div class="alert alert-danger" *ngIf="errorMessage" role="alert">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ errorMessage }}
+      </div>
+
+      <form class="report-form" [formGroup]="reportForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label>CATEGORY<span class="required">*</span></label>
+          <select formControlName="category" required>
+            <option value="" disabled selected>Select a category</option>
+            <option value="road">Road Damage</option>
+            <option value="lighting">Streetlight Issues</option>
+            <option value="drainage">Drainage Problem</option>
+            <option value="sidewalk">Illegal Dumping</option>
+            <option value="sidewalk">Traffic Sign Issues</option>
+            <option value="sidewalk">Pedestrian Hazards</option>
+            <option value="other">Other</option>
+          </select>
+          <div class="error-message" *ngIf="reportForm.get('category')?.invalid && reportForm.get('category')?.touched">
+            Please select a category
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="4"
+            placeholder="Please provide a detailed description of the issue"
+          ></textarea>
+          <div class="error-message" *ngIf="reportForm.get('description')?.errors?.['required'] && reportForm.get('description')?.touched">
+            Description is required
+          </div>
+          <div class="error-message" *ngIf="reportForm.get('description')?.errors?.['minlength'] && reportForm.get('description')?.touched">
+            Description must be at least 10 characters long
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Image Upload</label>
+          <div class="image-upload-container">
+            <div class="upload-options">
+              <div class="file-upload">
+                <input
+                  type="file"
+                  id="imageUpload"
+                  accept="image/*"
+                  (change)="onFileSelected($event)"
+                  [disabled]="isSubmitting"
+                >
+                <label for="imageUpload" class="upload-button">
+                  <i class="fas fa-upload"></i> Choose File
+                </label>
+              </div>
+              <button
+                type="button"
+                class="capture-button"
+                (click)="captureImage()"
+                [disabled]="isSubmitting"
+              >
+                <i class="fas fa-camera"></i> Take Photo
+              </button>
+            </div>
+            
+            <div class="image-preview" *ngIf="imagePreview">
+              <img [src]="imagePreview" alt="Preview">
+              <button
+                type="button"
+                class="remove-image"
+                (click)="removeImage()"
+                [disabled]="isSubmitting"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="error-message" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Location</label>
+          <div class="location-search">
+            <input
+              #searchInput
+              type="text"
+              placeholder="Search for a location..."
+              (keyup.enter)="searchLocation(searchInput)"
+              class="location-search-input"
+            >
+            <button
+              type="button"
+              class="search-button"
+              (click)="searchLocation(searchInput)"
+              [disabled]="isSearching"
+            >
+              <i class="fas" [class.fa-search]="!isSearching" [class.fa-spinner]="isSearching" [class.fa-spin]="isSearching"></i>
+            </button>
+          </div>
+          <div #mapContainer class="map-container" style="height: 400px; width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 1rem;">
+            <div class="map-loading" *ngIf="isLocating">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Getting your location...</span>
+            </div>
+          </div>
+          <div class="location-controls">
+            <button
+              type="button"
+              class="refresh-location"
+              (click)="getCurrentLocation()"
+              [disabled]="isLocating"
+            >
+              <i class="fas fa-sync-alt" [class.spinning]="isLocating"></i>
+              {{ isLocating ? 'Getting Location...' : 'Refresh Location' }}
+            </button>
+          </div>
+          <div class="error-message" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+          <div class="error-message" *ngIf="reportForm.get('latitude')?.errors?.['required'] && reportForm.get('latitude')?.touched">
+            Please select a location on the map
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="submit-button"
+          [disabled]="!reportForm.valid || isSubmitting"
+        >
+          <span *ngIf="!isSubmitting">Submit Report</span>
+          <span *ngIf="isSubmitting">Submitting...</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

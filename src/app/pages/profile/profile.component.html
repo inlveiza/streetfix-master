@@ -1,0 +1,91 @@
+<div class="profile-container">
+  <!-- Primary Header with Logo -->
+  <div class="primary-header">
+    <div class="logo-container">
+      <div class="logo-oval">
+        <img src="assets/streetfix-logo.png" alt="StreetFix Logo" class="logo">
+      </div>
+    </div>
+  </div>
+
+  <!-- Secondary Header with Navigation and Title -->
+  <div class="secondary-header">
+    <div class="nav-container">
+      <div class="nav-oval">
+        <a routerLink="/reports" class="nav-link">Reports</a>
+        <a routerLink="/profile" class="nav-link active">Profile</a>
+      </div>
+      <button class="nav-arrow logout-button" (click)="handleLogout()">
+        <img src="assets/logout.png" alt="Logout" class="logout-icon">
+      </button>
+    </div>
+    <h1 class="reports-title">PROFILE</h1>
+  </div>
+
+  <!-- Logout Confirmation Dialog -->
+  <app-logout
+    *ngIf="showLogoutDialog"
+    (confirm)="onLogoutConfirmed()"
+    (cancel)="onLogoutCancelled()">
+  </app-logout>
+
+  <!-- Report an Issue Button (replaces sort button) -->
+  <div class="sort-button-container">
+    <button class="sort-dropdown" routerLink="/report-an-issue">REPORT AN ISSUE</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <!-- Profile Cards Container -->
+    <div class="profile-cards-container">
+      <div class="profile-cards" *ngIf="reports && reports.length > 0">
+        <div class="profile-card" *ngFor="let report of reports">
+          <!-- Card content here -->
+          <div class="card-content">
+            <h3>Report #{{report.id}}</h3>
+            <p>{{report.description}}</p>
+            <span class="status">{{report.status}}</span>
+          </div>
+        </div>
+      </div>
+      <div class="no-reports" *ngIf="!reports || reports.length === 0">
+        <div class="empty-state-container">
+          <h2>You haven't submitted any reports yet</h2>
+          <p>Start contributing to your community by reporting issues in your area</p>
+          <button class="create-report-btn" (click)="reportIssue()">
+            Create your first post here
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="nav-icon">
+        <img src="assets/gc-logo.png" alt="Gordon College">
+      </div>
+      <div class="nav-icon">
+        <img src="assets/streetfix-logo.png" alt="Streetfix">
+      </div>
+      <div class="nav-icon">
+        <img src="assets/ccs-logo.png" alt="Gordon College CCS">
+      </div>
+    </div>
+
+    <!-- Profile Description -->
+    <div class="profile-description">
+      <p>This is your personal hub for tracking your reports, updates, and contributions to a better community.</p>
+    </div>
+
+    <!-- Profile Illustration -->
+    <div class="profile-illustration">
+      <img src="assets/profile-illustration.png" alt="Profile Illustration">
+    </div>
+
+    <!-- Footer Text -->
+    <div class="footer-text">
+      <p>This system was developed as a final project for the Application Development course of the College of Computer Studies at Gordon College during the 2024-2025 academic year.</p>
+    </div>
+  </div>
+</div>

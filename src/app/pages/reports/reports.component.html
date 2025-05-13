@@ -1,0 +1,113 @@
+<!-- Primary Header with Logo -->
+<div class="primary-header">
+  <div class="logo-container">
+    <div class="logo-oval">
+      <img src="assets/streetfix-logo.png" alt="StreetFix Logo" class="logo">
+    </div>
+  </div>
+</div>
+
+<!-- Secondary Header with Navigation and Title -->
+<div class="secondary-header">
+  <div class="nav-container">
+    <div class="nav-oval">
+      <a routerLink="/reports" class="nav-link active">Reports</a>
+      <a routerLink="/profile" class="nav-link">Profile</a>
+    </div>
+    <button class="nav-arrow logout-button" (click)="handleLogout()">
+      <img src="assets/logout.png" alt="Logout" class="logout-icon">
+    </button>
+  </div>
+  <h1 class="reports-title">REPORTS</h1>
+</div>
+
+<!-- Logout Confirmation Dialog -->
+<app-logout-confirmation
+  *ngIf="showLogoutDialog"
+  (confirm)="onLogoutConfirmed()"
+  (cancel)="onLogoutCancelled()">
+</app-logout-confirmation>
+
+<!-- Sort Button -->
+<div class="sort-button-container">
+  <button class="sort-dropdown" (click)="toggleSortMenu()">
+    <i class="fas fa-filter"></i>
+    <span>SORT BY:</span>
+    <i class="fas fa-chevron-down"></i>
+  </button>
+  <div class="sort-menu" [class.active]="isSortMenuOpen">
+    <a href="#" class="sort-option" [class.selected]="currentSort === 'votes-high'" (click)="sortReports('votes-high', $event)">
+      Votes • High to Low
+    </a>
+    <a href="#" class="sort-option" [class.selected]="currentSort === 'votes-low'" (click)="sortReports('votes-low', $event)">
+      Votes • Low to High
+    </a>
+  </div>
+</div>
+
+<!-- Description Text -->
+<div class="description-text">
+  This is your central hub for managing community reports efficiently. Stay informed, take action, and help keep public spaces well-maintained.
+</div>
+
+<!-- Main Content -->
+<div class="content-wrapper">
+  <!-- Reports Feed -->
+  <div class="reports-feed">
+    <div class="report-card" *ngFor="let report of reports">
+      <div class="report-header">
+        <div class="user-info">
+          <i class="fas fa-user-circle"></i>
+          <span>{{ report.userEmail ? report.userEmail.split('@')[0] : 'Anonymous' }}</span>
+        </div>
+        <div class="status-badge" [ngClass]="report.status">
+          {{ report.status }}
+        </div>
+      </div>
+
+      <!-- Debug info -->
+      <div class="debug-info" *ngIf="report.imageUrl">
+        <small>Image URL: {{ report.imageUrl }}</small>
+      </div>
+
+      <!-- Image Section -->
+      <div class="report-image" *ngIf="report.imageUrl">
+        <img 
+          [src]="report.imageUrl" 
+          alt="Report Image" 
+          (error)="handleImageError($event)"
+          (load)="handleImageLoad(report.imageUrl)"
+        >
+      </div>
+
+      <div class="report-details">
+        <div class="category">
+          <i class="fas fa-tag"></i>
+          <span>{{ report.category }}</span>
+        </div>
+        <div class="location">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>{{ report.location }}</span>
+        </div>
+        <div class="description">
+          <i class="fas fa-align-left"></i>
+          <span>{{ report.description }}</span>
+        </div>
+        <div class="coordinates" *ngIf="report.latitude && report.longitude">
+          <i class="fas fa-location-arrow"></i>
+          <span>Lat: {{ report.latitude | number:'1.6-6' }}, Lng: {{ report.longitude | number:'1.6-6' }}</span>
+        </div>
+      </div>
+
+      <div class="report-footer">
+        <button class="upvote-button" (click)="upvoteReport(report)" [disabled]="isSubmitting">
+          <img [src]="getUpvoteIcon(report)" alt="Upvote" [class.active]="report.isUpvoted">
+          <span>{{ report.upvotes || 0 }}</span>
+        </button>
+        <div class="timestamp">
+          {{ report.timestamp?.toDate() | date:'medium' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

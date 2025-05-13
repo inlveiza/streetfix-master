@@ -1,0 +1,118 @@
+<!-- Primary Header with Logo -->
+<div class="primary-header">
+  <div class="logo-container">
+    <div class="logo-oval">
+      <img src="assets/streetfix-logo.png" alt="StreetFix Logo" class="logo">
+    </div>
+  </div>
+</div>
+
+<!-- Secondary Header with Title -->
+<div class="secondary-header">
+  <div class="nav-container">
+    <button class="nav-arrow logout-button-outline" (click)="handleLogout()">
+      <img src="assets/logout.png" alt="Logout" class="logout-icon">
+    </button>
+  </div>
+  <h1 class="reports-title">ADMIN</h1>
+</div>
+
+<!-- Logout Confirmation Dialog -->
+<app-logout
+  *ngIf="showLogoutDialog"
+  (confirm)="onLogoutConfirmed()"
+  (cancel)="onLogoutCancelled()">
+</app-logout>
+
+<!-- Status Update Confirmation Dialog -->
+<app-status-confirmation
+  *ngIf="showStatusDialog"
+  [newStatus]="pendingStatus ? formatStatus(pendingStatus) : ''"
+  (confirm)="confirmStatusUpdate()"
+  (cancel)="closeStatusDialog()">
+</app-status-confirmation>
+
+<!-- Sort Button -->
+<div class="sort-button-container">
+  <button class="sort-dropdown" (click)="toggleSortMenu()">
+    <i class="fas fa-filter"></i>
+    <span>SORT BY:</span>
+    <i class="fas fa-chevron-down"></i>
+  </button>
+  <div class="sort-menu" [class.active]="isSortMenuOpen">
+    <a href="#" class="sort-option" [class.selected]="currentSort === 'votes-high'" (click)="sortReports('votes-high', $event)">
+      Votes • High to Low
+    </a>
+    <a href="#" class="sort-option" [class.selected]="currentSort === 'votes-low'" (click)="sortReports('votes-low', $event)">
+      Votes • Low to High
+    </a>
+  </div>
+</div>
+
+<!-- Description Text -->
+<div class="description-text">
+  This is your central hub for managing community reports efficiently. Stay informed, take action, and help keep public spaces well-maintained.
+</div>
+
+<!-- Main Content -->
+<div class="content-wrapper">
+  <!-- Reports Feed -->
+  <div class="reports-feed">
+    <div class="report-card" *ngFor="let report of reports">
+      <!-- User Info -->
+      <div class="report-header">
+        <div class="user-info">
+          <img [src]="getAvatarPath(report.userAvatar)" alt="User avatar" class="user-avatar">
+          <span class="username">{{report.username}}</span>
+        </div>
+        <div class="status-controls">
+          <button class="status-button" [class.active]="report.status === 'PENDING'" (click)="initiateStatusUpdate(report, 'PENDING')">
+            Pending
+          </button>
+          <button class="status-button" [class.active]="report.status === 'IN_PROGRESS'" (click)="initiateStatusUpdate(report, 'IN_PROGRESS')">
+            In Progress
+          </button>
+          <button class="status-button" [class.active]="report.status === 'RESOLVED'" (click)="initiateStatusUpdate(report, 'RESOLVED')">
+            Resolved
+          </button>
+        </div>
+      </div>
+
+      <!-- Report Image -->
+      <div class="report-image">
+        <ng-container *ngIf="report.image; else noImage">
+          <img [src]="report.image" alt="Report image">
+        </ng-container>
+        <ng-template #noImage>
+          <div class="no-image-placeholder">
+            <span>No Image</span>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Report Details -->
+      <div class="report-details">
+        <div class="detail-item">
+          <strong>CATEGORY:</strong> {{report.category}}
+        </div>
+        <div class="detail-item">
+          <strong>LOCATION:</strong> {{report.location}}
+        </div>
+        <div class="detail-item description">
+          <strong>DESCRIPTION:</strong>
+          <p>{{report.description}}</p>
+        </div>
+      </div>
+
+      <!-- Report Footer -->
+      <div class="report-footer">
+        <div class="location-marker">
+          <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <div class="votes">
+          <span class="vote-count">{{report.upvotes}} upvotes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

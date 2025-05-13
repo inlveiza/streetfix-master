@@ -1,0 +1,61 @@
+<div class="signin-container">
+    <div class="curved-background">
+        <div class="logo-container">
+            <div class="logo">
+                <img src="assets/streetfix-logo.png" alt="StreetFix Logo">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <h2>Sign in</h2>
+        <p class="subtitle">Log in by entering your email and password.</p>
+
+        <form [formGroup]="signInForm" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+                <input type="email" 
+                       formControlName="email" 
+                       placeholder="Email Address"
+                       class="form-input"
+                       [class.error]="signInForm.get('email')?.invalid && signInForm.get('email')?.touched">
+                <div class="error-message" *ngIf="signInForm.get('email')?.invalid && signInForm.get('email')?.touched">
+                    {{ getErrorMessage('email') }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="password-input-container">
+                    <input 
+                        [type]="showPassword ? 'text' : 'password'"
+                        formControlName="password" 
+                        placeholder="Password"
+                        class="form-input"
+                        [class.error]="signInForm.get('password')?.invalid && signInForm.get('password')?.touched"
+                    >
+                    <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
+                        <i class="fas" [ngClass]="{'fa-eye': !showPassword, 'fa-eye-slash': showPassword}"></i>
+                    </button>
+                </div>
+                <div class="error-message" *ngIf="signInForm.get('password')?.invalid && signInForm.get('password')?.touched">
+                    {{ getErrorMessage('password') }}
+                </div>
+            </div>
+
+            <div class="error-message" *ngIf="errorMessage">
+                {{ errorMessage }}
+            </div>
+
+            <div class="success-message" *ngIf="successMessage">
+                {{ successMessage }}
+            </div>
+
+            <button type="submit" class="login-btn" [disabled]="!signInForm.valid || isLoading">
+                {{ isLoading ? 'Signing in...' : 'Log in' }}
+            </button>
+        </form>
+    </div>
+
+    <div class="signup-prompt">
+        Don't have an account? <a href="/sign-up" class="signup-link">Sign up here</a>
+    </div>
+</div>
