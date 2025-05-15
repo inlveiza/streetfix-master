@@ -13,8 +13,6 @@ export interface User {
     reportsSubmitted: number;
     reportsResolved: number;
     emailVerified: boolean;
-    verificationCode?: string | null;
-    verificationCodeExpiry?: Timestamp | null;
     phoneNumber?: string;
     profilePicture?: string;
     location?: {

@@ -8,13 +8,10 @@
     </div>
 
     <div class="form-card">
-        <h2>{{ showOtpVerification ? 'Verify Email' : 'Sign up' }}</h2>
-        <p class="subtitle">
-            {{ showOtpVerification ? 'Enter the verification code sent to your email' : 'Create an account to start reporting issues.' }}
-        </p>
+        <h2>Create Your Account</h2>
+        <p class="subtitle">Create an account to start reporting issues.</p>
 
-        <!-- Sign Up Form -->
-        <form *ngIf="!showOtpVerification" [formGroup]="signUpForm" (ngSubmit)="onSubmit()">
+        <form [formGroup]="signUpForm" (ngSubmit)="onSubmit()">
             <div class="form-group">
                 <input type="text" 
                        formControlName="fullName" 
@@ -40,7 +37,7 @@
             <div class="form-group">
                 <input type="text" 
                        formControlName="address" 
-                       placeholder="Address"
+                       placeholder="Home Address"
                        class="form-input"
                        [class.error]="signUpForm.get('address')?.invalid && signUpForm.get('address')?.touched">
                 <div class="error-message" *ngIf="signUpForm.get('address')?.invalid && signUpForm.get('address')?.touched">
@@ -52,7 +49,7 @@
                 <div class="password-input-container">
                     <input [type]="showPassword ? 'text' : 'password'"
                            formControlName="password" 
-                           placeholder="Password"
+                           placeholder="Create Password"
                            class="form-input"
                            [class.error]="signUpForm.get('password')?.invalid && signUpForm.get('password')?.touched">
                     <button type="button" class="toggle-password" (click)="togglePasswordVisibility('password')">
@@ -83,35 +80,14 @@
             <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
             <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
 
-            <button type="submit" class="signup-btn" [disabled]="!signUpForm.valid || isLoading">
-                {{ isLoading ? 'Creating account...' : 'Create Account' }}
-            </button>
-        </form>
-
-        <!-- OTP Verification Form -->
-        <form *ngIf="showOtpVerification" [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
-            <div class="form-group">
-                <input type="text" 
-                       formControlName="otp" 
-                       placeholder="Enter 6-digit code"
-                       class="form-input otp-input"
-                       maxlength="6"
-                       [class.error]="otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched">
-                <div class="error-message" *ngIf="otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched">
-                    {{ getOtpErrorMessage() }}
-                </div>
-            </div>
-
-            <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
-            <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
-
-            <button type="submit" class="verify-btn" [disabled]="!otpForm.valid || isLoading">
-                {{ isLoading ? 'Verifying...' : 'Verify Email' }}
+            <button type="submit" class="create-account-btn" [disabled]="!signUpForm.valid || isLoading">
+                <span *ngIf="!isLoading">Create Account</span>
+                <span *ngIf="isLoading">Creating Account...</span>
             </button>
         </form>
     </div>
 
-    <div class="signin-prompt">
-        Already have an account? <a href="/sign-in" class="signin-link">Sign in here</a>
+    <div class="login-prompt">
+        Already have an account? <a href="/sign-in" class="login-link">Sign in here</a>
     </div>
 </div>

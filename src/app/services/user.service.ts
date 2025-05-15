@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {
   Auth,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut,
   UserCredential
@@ -47,8 +48,8 @@ export class UserService {
           return 'Network error. Please check your internet connection.';
         case 'auth/too-many-requests':
           return 'Too many attempts. Please try again later.';
-        case 'auth/invalid-verification-code':
-          return 'Invalid verification code. Please try again.';
+        case 'auth/unverified-email':
+          return 'Please verify your email address before signing in.';
         default:
           return `Authentication error: ${error.message}`;
       }
@@ -75,17 +76,13 @@ export class UserService {
     return error.message || 'An unexpected error occurred. Please try again.';
   }
 
-  private generateOTP(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  async signUp(email: string, password: string, userData: Partial<User>): Promise<{ userCredential: UserCredential; otp: string }> {
+  async signUp(email: string, password: string, userData: Partial<User>): Promise<UserCredential> {
     try {
       // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
       
-      // Generate OTP
-      const otp = this.generateOTP();
+      // Send verification email
+      await sendEmailVerification(userCredential.user);
       
       // Create user document in Firestore
       const userDoc = doc(this.firestore, 'users', userCredential.user.uid);
@@ -101,53 +98,11 @@ export class UserService {
         permissions: ['submit_report'],
         reportsSubmitted: 0,
         reportsResolved: 0,
-        emailVerified: false,
-        verificationCode: otp,
-        verificationCodeExpiry: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes expiry
+        emailVerified: false
       };
       
       await setDoc(userDoc, newUser);
-      
-      // Send OTP email using your email service
-      await this.sendOTPEmail(email, otp);
-      
-      return { userCredential, otp };
-    } catch (error) {
-      throw new Error(this.handleError(error));
-    }
-  }
-
-  private async sendOTPEmail(email: string, otp: string): Promise<void> {
-    // Implement your email sending logic here
-    // You can use services like SendGrid, AWS SES, or your own SMTP server
-    console.log(`Sending OTP ${otp} to ${email}`);
-  }
-
-  async verifyOTP(uid: string, otp: string): Promise<void> {
-    try {
-      const userDoc = doc(this.firestore, 'users', uid);
-      const userSnap = await getDoc(userDoc);
-      
-      if (!userSnap.exists()) {
-        throw new Error('User not found');
-      }
-
-      const userData = userSnap.data() as User;
-      
-      if (userData.verificationCode !== otp) {
-        throw new Error('Invalid verification code');
-      }
-
-      if (new Date(userData.verificationCodeExpiry.toDate()) < new Date()) {
-        throw new Error('Verification code has expired');
-      }
-
-      // Update user document with verified status
-      await updateDoc(userDoc, {
-        emailVerified: true,
-        verificationCode: null,
-        verificationCodeExpiry: null
-      });
+      return userCredential;
     } catch (error) {
       throw new Error(this.handleError(error));
     }
@@ -157,23 +112,39 @@ export class UserService {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
       
-      // Check if user document exists and is verified
+      // Check if email is verified
+      if (!userCredential.user.emailVerified) {
+        throw new Error('auth/unverified-email');
+      }
+
+      // Check if user document exists
       const userDoc = doc(this.firestore, 'users', userCredential.user.uid);
       const userSnap = await getDoc(userDoc);
 
       if (!userSnap.exists()) {
-        throw new Error('User not found');
+        // Create user document if it doesn't exist
+        const newUser: User = {
+          uid: userCredential.user.uid,
+          email: email,
+          fullName: '',
+          address: '',
+          createdAt: serverTimestamp() as any,
+          lastLoginAt: serverTimestamp() as any,
+          isActive: true,
+          role: 'user',
+          permissions: ['submit_report'],
+          reportsSubmitted: 0,
+          reportsResolved: 0,
+          emailVerified: userCredential.user.emailVerified
+        };
+        await setDoc(userDoc, newUser);
+      } else {
+        // Update last login timestamp and email verification status
+        await updateDoc(userDoc, {
+          lastLoginAt: serverTimestamp(),
+          emailVerified: userCredential.user.emailVerified
+        });
       }
-
-      const userData = userSnap.data() as User;
-      if (!userData.emailVerified) {
-        throw new Error('Please verify your email before signing in');
-      }
-
-      // Update last login timestamp
-      await updateDoc(userDoc, {
-        lastLoginAt: serverTimestamp()
-      });
 
       return userCredential;
     } catch (error) {

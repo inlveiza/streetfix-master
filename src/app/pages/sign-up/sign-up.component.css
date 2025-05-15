@@ -162,6 +162,13 @@ h2 {
     min-height: 20px;
 }
 
+.success-message {
+    color: #28a745;
+    font-size: 12px;
+    margin-top: 4px;
+    min-height: 20px;
+}
+
 .create-account-btn {
     width: 100%;
     padding: 14px;
@@ -202,31 +209,4 @@ h2 {
 
 .login-link:hover {
     text-decoration: underline;
-}
-
-.otp-input {
-    font-size: 24px;
-    letter-spacing: 4px;
-    text-align: center;
-}
-
-.verify-btn {
-    width: 100%;
-    padding: 14px;
-    background-color: #2D796D;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    position: relative;
-    z-index: 1;
-    margin-top: 16px;
-}
-
-.verify-btn:disabled {
-    background-color: #CCE0DD;
-    cursor: not-allowed;
-    opacity: 0.7;
 }
