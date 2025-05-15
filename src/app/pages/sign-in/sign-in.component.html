@@ -41,12 +41,16 @@
                 </div>
             </div>
 
-            <div class="error-message" *ngIf="errorMessage">
-                {{ errorMessage }}
-            </div>
-
-            <div class="success-message" *ngIf="successMessage">
-                {{ successMessage }}
+            <!-- Error and Success Messages -->
+            <div class="message-container" *ngIf="errorMessage || successMessage">
+                <div class="error-message alert" *ngIf="errorMessage">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ errorMessage }}
+                </div>
+                <div class="success-message alert" *ngIf="successMessage">
+                    <i class="fas fa-check-circle"></i>
+                    {{ successMessage }}
+                </div>
             </div>
 
             <button type="submit" class="login-btn" [disabled]="!signInForm.valid || isLoading">

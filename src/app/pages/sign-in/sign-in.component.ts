@@ -18,6 +18,7 @@ export class SignInComponent implements OnInit {
   showConfirmPassword = false;
   successMessage = '';
   errorMessage = '';
+  isEmailUnverified = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -67,6 +68,7 @@ export class SignInComponent implements OnInit {
   async onSubmit() {
     this.successMessage = '';
     this.errorMessage = '';
+    this.isEmailUnverified = false;
     this.signInForm.markAllAsTouched();
 
     if (this.signInForm.valid) {
@@ -80,7 +82,17 @@ export class SignInComponent implements OnInit {
         // If successful, navigate to profile
         this.router.navigate(['/profile']);
       } catch (error: any) {
-        this.errorMessage = error.message || 'Invalid email or password';
+        // Handle specific error cases
+        if (error.message === 'auth/unverified-email') {
+          this.isEmailUnverified = true;
+          this.errorMessage = 'Please verify your email address before signing in. Check your inbox for the verification link.';
+        } else if (error.message === 'auth/wrong-password' || error.message === 'auth/user-not-found') {
+          this.errorMessage = 'Invalid email or password. Please try again.';
+        } else if (error.message === 'auth/too-many-requests') {
+          this.errorMessage = 'Too many failed attempts. Please try again later.';
+        } else {
+          this.errorMessage = error.message || 'An error occurred while signing in.';
+        }
       } finally {
         this.isLoading = false;
       }

@@ -44,12 +44,16 @@ export class UserService {
           return 'Email/password accounts are not enabled. Please contact support.';
         case 'auth/weak-password':
           return 'Password is too weak. Please use a stronger password.';
+        case 'auth/wrong-password':
+          return 'auth/wrong-password';
+        case 'auth/user-not-found':
+          return 'auth/user-not-found';
         case 'auth/network-request-failed':
           return 'Network error. Please check your internet connection.';
         case 'auth/too-many-requests':
-          return 'Too many attempts. Please try again later.';
+          return 'auth/too-many-requests';
         case 'auth/unverified-email':
-          return 'Please verify your email address before signing in.';
+          return 'auth/unverified-email';
         default:
           return `Authentication error: ${error.message}`;
       }
