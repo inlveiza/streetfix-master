@@ -69,12 +69,8 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    // Initialize map after view is ready
-    setTimeout(() => {
-      this.initializeMap();
-      // Request location permission and get current location immediately
-      this.requestLocationPermission();
-    }, 500);
+    // Initialize map first and then request location
+    this.initializeMap();
   }
 
   private initializeMap() {
@@ -90,17 +86,17 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         this.map = null;
       }
 
-      // Initialize map with a default view (Olongapo City coordinates)
+      // Initialize map with Gordon College coordinates as fallback
       this.map = L.map(this.mapContainer.nativeElement, {
         zoomControl: true,
         attributionControl: true,
-        dragging: true, // Enable map dragging
-        touchZoom: true, // Enable touch zoom
-        scrollWheelZoom: true, // Enable scroll wheel zoom
-        doubleClickZoom: true, // Enable double click zoom
-        boxZoom: true, // Enable box zoom
-        keyboard: true // Enable keyboard navigation
-      }).setView([14.8386, 120.2846], 13);
+        dragging: true,
+        touchZoom: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        boxZoom: true,
+        keyboard: true
+      }).setView([14.832, 120.2820], 14.5);
 
       // Add tile layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -108,8 +104,8 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         maxZoom: 19
       }).addTo(this.map);
 
-      // Create marker
-      this.marker = L.marker([14.8386, 120.2846], {
+      // Create marker at the center
+      this.marker = L.marker([14.832, 120.2820], {
         draggable: true
       }).addTo(this.map);
 
@@ -126,6 +122,12 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         if (this.marker) {
           this.marker.setLatLng([lat, lng]);
         }
+      });
+
+      // Only request location after map is fully initialized
+      this.map.whenReady(() => {
+        console.log('Map is fully initialized, requesting location...');
+        this.requestLocationPermission();
       });
 
     } catch (error) {
@@ -162,38 +164,57 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     this.isLocating = true;
     this.errorMessage = '';
 
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0
+    const options: PositionOptions = {
+      enableHighAccuracy: true, // Force high accuracy
+      timeout: 10000, // 10 second timeout
+      maximumAge: 0 // Don't use cached position
     };
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         this.ngZone.run(() => {
+          console.log('Received GPS coordinates:', position.coords);
+          
           const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
 
-          console.log('Got location:', newLocation);
+          // Update the current location
           this.currentLocation = newLocation;
-          this.updateLocation(newLocation.lat, newLocation.lng);
 
-          // Update map and marker
+          // Ensure map and marker exist
           if (this.map && this.marker) {
-            this.map.setView([newLocation.lat, newLocation.lng], 15);
+            // First update marker position
             this.marker.setLatLng([newLocation.lat, newLocation.lng]);
+            
+            // Then pan the map to the new location
+            this.map.setView([newLocation.lat, newLocation.lng], 14.5, {
+              animate: true,
+              duration: 1
+            });
+
+            // Update form values
+            this.updateLocation(newLocation.lat, newLocation.lng);
+            
+            console.log('Map updated with GPS location:', newLocation);
+          } else {
+            console.error('Map or marker not initialized when receiving GPS location');
           }
 
           this.isLocating = false;
         });
       },
       (error) => {
-        console.error('Error getting location:', error);
+        console.error('Geolocation error:', error);
         this.ngZone.run(() => {
           this.errorMessage = this.getLocationErrorMessage(error);
           this.isLocating = false;
+          
+          // If location fails, ensure we're still centered on Gordon College
+          if (this.map) {
+            this.map.setView([14.832, 120.2820], 14.5);
+          }
         });
       },
       options
@@ -215,13 +236,21 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
 
   private updateLocation(lat: number, lng: number) {
     this.currentLocation = { lat, lng };
+    
+    // Update form values
     this.reportForm.patchValue({
       latitude: lat,
       longitude: lng
     });
 
     // Use OpenStreetMap Nominatim for reverse geocoding
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+    
+    fetch(url, {
+      headers: {
+        'Accept-Language': 'en-US,en;q=0.9' // Request English results
+      }
+    })
       .then(response => response.json())
       .then(data => {
         if (data.display_name) {
@@ -363,95 +392,103 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   }
 
   async onSubmit() {
+    if (this.reportForm.invalid) {
+      this.errorMessage = 'Please fill in all required fields.';
+      return;
+    }
+
     if (!this.auth.currentUser) {
       this.errorMessage = 'You must be logged in to submit a report.';
       return;
     }
 
-    if (this.reportForm.valid && !this.isSubmitting) {
-      this.isSubmitting = true;
-      this.errorMessage = '';
+    this.isSubmitting = true;
+    this.errorMessage = '';
 
-      try {
-        console.log('=== Debug Information ===');
-        console.log('1. Current user:', this.auth.currentUser);
-        console.log('2. User ID:', this.auth.currentUser.uid);
-        console.log('3. User email:', this.auth.currentUser.email);
-        console.log('4. Form values:', this.reportForm.value);
-        console.log('5. Image URL:', this.reportForm.get('imageUrl')?.value);
+    try {
+      console.log('=== Debug Information ===');
+      console.log('1. Current user:', this.auth.currentUser);
+      console.log('2. User ID:', this.auth.currentUser.uid);
+      console.log('3. User email:', this.auth.currentUser.email);
+      console.log('4. Form values:', this.reportForm.value);
+      console.log('5. Image URL:', this.reportForm.get('imageUrl')?.value);
 
-        // First, verify if the user document exists
-        const userDocRef = doc(this.firestore, 'users', this.auth.currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        
-        console.log('6. User document exists:', userDoc.exists());
-        if (userDoc.exists()) {
-          console.log('7. User document data:', userDoc.data());
-        }
-
-        if (!userDoc.exists()) {
-          console.log('Creating user document...');
-          const newUser = {
-            uid: this.auth.currentUser.uid,
-            email: this.auth.currentUser.email,
-            fullName: '',
-            address: '',
-            createdAt: new Date(),
-            lastLoginAt: new Date(),
-            isActive: true,
-            role: 'user',
-            permissions: ['submit_report'],
-            reportsSubmitted: 0,
-            reportsResolved: 0
-          };
-          await setDoc(userDocRef, newUser);
-          console.log('User document created successfully');
-        }
-
-        const reportData = {
-          ...this.reportForm.value,
-          timestamp: new Date(),
-          status: 'pending',
-          userId: this.auth.currentUser.uid,
-          userEmail: this.auth.currentUser.email
-        };
-        console.log('8. Report data to be saved:', reportData);
-
-        console.log('9. Attempting to save report...');
-        const reportsCollection = collection(this.firestore, 'reports');
-        console.log('10. Collection reference created');
-        
-        const docRef = await addDoc(reportsCollection, reportData);
-        console.log('11. Report saved successfully with ID:', docRef.id);
-        console.log('12. Final report data:', reportData);
-
-        // Reset form and reinitialize map
-        this.reportForm.reset();
-        this.selectedImage = null;
-        this.imagePreview = null;
-        this.currentLocation = null;
-
-        // Show success message
-        alert('Report submitted successfully!');
-
-        // Reload the page and redirect to reports dashboard
-        window.location.href = '/reports';
-
-      } catch (error: any) {
-        console.error('=== Error Details ===');
-        console.error('Error type:', error.constructor.name);
-        if (error instanceof FirebaseError) {
-          console.error('Firebase error code:', error.code);
-          console.error('Firebase error message:', error.message);
-          console.error('Firebase error details:', error);
-        }
-        this.errorMessage = this.handleError(error);
-      } finally {
-        this.isSubmitting = false;
+      // First, verify if the user document exists
+      const userDocRef = doc(this.firestore, 'users', this.auth.currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      console.log('6. User document exists:', userDoc.exists());
+      if (userDoc.exists()) {
+        console.log('7. User document data:', userDoc.data());
       }
-    } else {
-      console.log('Form validation failed:', this.reportForm.errors);
-      this.errorMessage = 'Please fill in all required fields correctly.';
+
+      if (!userDoc.exists()) {
+        console.log('Creating user document...');
+        const newUser = {
+          uid: this.auth.currentUser.uid,
+          email: this.auth.currentUser.email,
+          fullName: '',
+          address: '',
+          createdAt: new Date(),
+          lastLoginAt: new Date(),
+          isActive: true,
+          role: 'user',
+          permissions: ['submit_report'],
+          reportsSubmitted: 0,
+          reportsResolved: 0
+        };
+        await setDoc(userDocRef, newUser);
+        console.log('User document created successfully');
+      }
+
+      const reportData = {
+        ...this.reportForm.value,
+        timestamp: new Date(),
+        status: 'pending',
+        userId: this.auth.currentUser.uid,
+        userEmail: this.auth.currentUser.email
+      };
+      console.log('8. Report data to be saved:', reportData);
+
+      console.log('9. Attempting to save report...');
+      const reportsCollection = collection(this.firestore, 'reports');
+      console.log('10. Collection reference created');
+      
+      const docRef = await addDoc(reportsCollection, reportData);
+      console.log('11. Report saved successfully with ID:', docRef.id);
+      console.log('12. Final report data:', reportData);
+
+      // Reset the map and form after successful submission
+      this.reportForm.reset();
+      this.selectedImage = null;
+      this.imagePreview = null;
+      
+      // Reset map to initial state
+      if (this.map && this.marker) {
+        this.map.setView([14.832, 120.2820], 14.5);
+        this.marker.setLatLng([14.832, 120.2820]);
+      }
+      
+      // Request current location again
+      this.requestLocationPermission();
+
+      // Show success message
+      alert('Report submitted successfully!');
+
+      // Reload the page and redirect to reports dashboard
+      window.location.href = '/reports';
+
+    } catch (error: any) {
+      console.error('=== Error Details ===');
+      console.error('Error type:', error.constructor.name);
+      if (error instanceof FirebaseError) {
+        console.error('Firebase error code:', error.code);
+        console.error('Firebase error message:', error.message);
+        console.error('Firebase error details:', error);
+      }
+      this.errorMessage = this.handleError(error);
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
