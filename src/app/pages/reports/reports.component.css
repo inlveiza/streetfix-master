@@ -224,9 +224,6 @@
 
 .content-wrapper {
   position: relative;
-  top: 155px;
-  left: 0;
-  right: 0;
   padding: 0 2rem;
   background: white;
   overflow-y: auto;
