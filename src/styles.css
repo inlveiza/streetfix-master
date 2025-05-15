@@ -1,8 +1,18 @@
 /* You can add global styles to this file, and also import other style files */
-html, body {
+html {
+    scroll-behavior: smooth;
     height: 100%;
     margin: 0;
     padding: 0;
+    overflow-y: overlay; /* Makes scrollbar overlay content instead of taking space */
+}
+
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    overflow-x: hidden;
 }
 
 * {
@@ -10,7 +20,67 @@ html, body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #c2c2c2 transparent;
 }
-  
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Responsive container classes */
+.content-wrapper {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+    transition: all 0.3s ease;
+}
+
+
+/* Smooth transitions for all animations */
+.fade-transition {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Interactive Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 12px;
+    background-color: #F5F5F5;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+    border-radius: 10px;
+    margin: 5px 0;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #c2c2c2;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 10px;
+    min-height: 50px;
+    transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #909090;
+    cursor: pointer;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: #606060;
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #c2c2c2 transparent;
+}
+
+/* Optional: Hide scrollbar on mobile devices */
+@media (max-width: 768px) {
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        border-width: 2px;
+    }
+}

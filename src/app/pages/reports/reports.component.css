@@ -217,7 +217,7 @@
   font-size: 1rem;
   line-height: 1.5;
   z-index: 2;
-  margin: 0 auto;
+  margin: 20px auto;
   max-width: 800px;
   font-weight: 500;
 }
@@ -472,7 +472,9 @@
   .description-text {
     font-size: 0.95rem;
     padding: 5px;
-    max-width: 90%;
+    max-width: 90%; 
+    margin: 20px auto;
+    top: 30px;
   }
 }
 
@@ -541,6 +543,8 @@
     font-size: 0.9rem;
     padding: 5px;
     max-width: 95%;
+    margin: 0px auto;
+    top: 0px;
   }
 }
 
@@ -567,5 +571,20 @@
 
   .report-footer {
     padding: 0.75rem;
+  }
+}
+
+/* Responsive breakpoints */
+@media (min-width: 1400px) {
+  .content-wrapper {
+      max-width: 1320px;
+      padding: 0 40px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .content-wrapper {
+      max-width: 1600px;
+      padding: 0 60px;
   }
 }
