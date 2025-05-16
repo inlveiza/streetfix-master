@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { LogoutComponent } from '../../logout/logout.component';
-
+import { LogoutConfirmationComponent } from '../../components/logout-confirmation/logout-confirmation.component';
+import { Auth, signOut } from '@angular/fire/auth';
 
 interface Report {
   id: number;
@@ -14,7 +14,7 @@ interface Report {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, LogoutComponent],
+  imports: [CommonModule, RouterModule, LogoutConfirmationComponent],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css']
 })
@@ -23,7 +23,10 @@ export class ProfileComponent implements OnInit {
   reports: Report[] = []; // This will store the user's reports
   showLogoutDialog = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private auth: Auth
+  ) {}
 
   ngOnInit() {
     // Here you would typically fetch the user's reports from a service
@@ -42,10 +45,16 @@ export class ProfileComponent implements OnInit {
     this.showLogoutDialog = true;
   }
 
-  onLogoutConfirmed() {
-    // Handle logout logic here
-    this.showLogoutDialog = false;
-    this.router.navigate(['/login']);
+  async onLogoutConfirmed() {
+    try {
+      await signOut(this.auth);
+      localStorage.removeItem('authToken');
+      this.router.navigate(['/sign-in']);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      this.showLogoutDialog = false;
+    }
   }
 
   onLogoutCancelled() {

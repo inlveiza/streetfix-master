@@ -90,4 +90,11 @@
     <div class="login-prompt">
         Already have an account? <a href="/sign-in" class="login-link">Sign in here</a>
     </div>
+
+    <!-- Email Verification Dialog -->
+    <app-email-verification
+        *ngIf="showVerificationDialog"
+        [email]="userEmail"
+        (confirm)="onVerificationConfirmed()">
+    </app-email-verification>
 </div>

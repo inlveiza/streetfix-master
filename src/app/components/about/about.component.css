@@ -1,0 +1,225 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #F9FFED;
+    border-radius: 25px;
+    width: 95%;
+    max-width: 360px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding-bottom: 30px;
+}
+
+.logo-container {
+    width: 100%;
+    height: 160px;
+    background-color: #2D796D;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    position: relative;
+}
+
+.logo-container img {
+    width: 80px;
+    height: 80px;
+}
+
+.content-container {
+    padding: 20px;
+    padding-top: 10px;
+}
+
+h2 {
+    color: #000;
+    font-size: 22px;
+    margin: 15px 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+.about-section {
+    margin-bottom: 15px;
+}
+
+.about-section h3 {
+    color: #000;
+    font-size: 16px;
+    margin: 0 0 10px 0;
+    font-weight: bold;
+}
+
+.about-section p {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+    background-color: #2D796D;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.close-btn:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 20px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.about-header h3 {
+    color: #2D796D;
+    font-size: 1.2rem;
+    margin: 0 0 12px 0;
+}
+
+.about-header p {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #444;
+    margin-bottom: 20px;
+}
+
+.about-mission p {
+    margin: 0 0 16px 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #555;
+}
+
+.modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.close-btn-footer {
+    background-color: #2D796D;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.close-btn-footer:hover {
+    background-color: #236358;
+}
+
+/* Desktop styles for About modal */
+@media screen and (min-width: 768px) {
+    .modal-content {
+        max-width: 550px;
+        max-height: 80vh;
+    }
+    
+    .logo-container {
+        height: 180px;
+    }
+    
+    .logo-container img {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .content-container {
+        padding: 30px;
+        padding-top: 15px;
+    }
+    
+    h2 {
+        font-size: 28px;
+        margin: 20px 0;
+    }
+    
+    .about-section {
+        margin-bottom: 25px;
+    }
+    
+    .about-section h3 {
+        font-size: 20px;
+        margin: 0 0 15px 0;
+    }
+    
+    .about-section p {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+}
+
+/* Large desktop styles */
+@media screen and (min-width: 1200px) {
+    .modal-content {
+        max-width: 650px;
+    }
+    
+    .logo-container {
+        height: 200px;
+    }
+    
+    .logo-container img {
+        width: 120px;
+        height: 120px;
+    }
+    
+    h2 {
+        font-size: 32px;
+    }
+    
+    .about-section h3 {
+        font-size: 22px;
+    }
+    
+    .about-section p {
+        font-size: 17px;
+        line-height: 1.7;
+    }
+}

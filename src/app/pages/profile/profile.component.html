@@ -23,11 +23,11 @@
   </div>
 
   <!-- Logout Confirmation Dialog -->
-  <app-logout
+  <app-logout-confirmation
     *ngIf="showLogoutDialog"
     (confirm)="onLogoutConfirmed()"
     (cancel)="onLogoutCancelled()">
-  </app-logout>
+  </app-logout-confirmation>
 
   <!-- Report an Issue Button (replaces sort button) -->
   <div class="sort-button-container">

@@ -1,23 +1,37 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TermsAndConditionsComponent } from '../../components/terms-and-conditions/terms-and-conditions.component';
+import { AboutComponent } from '../../components/about/about.component';
 
 @Component({
   selector: 'app-welcome',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, TermsAndConditionsComponent, AboutComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './welcome.component.html',
   styleUrls: ['./welcome.component.css']
 })
 export class WelcomeComponent implements OnInit {
   currentTime: string = '';
+  termsAccepted = false;
+  termsVisible = false;
+  aboutVisible = false;
 
   constructor(private router: Router) {}
 
-  goToSignIn() {
+  goToSignIn(): void {
     this.router.navigate(['/sign-in']);
   }
 
+  showTerms(): void {
+    this.termsVisible = true;
+  }
+
+  showAbout(): void {
+    this.aboutVisible = true;
+  }
 
   ngOnInit() {
     this.updateTime();

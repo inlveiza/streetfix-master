@@ -1,8 +1,13 @@
 .welcome-container {
     position: relative;
-    height: 100vh;
+    min-height: 100vh;
     background-color: white;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
 }
 
 .time {
@@ -96,6 +101,8 @@
     color: #2D796D;
     font-size: 24px;
     margin-bottom: 16px;
+    font-family: solid 'Poppins';
+    font-weight: bold;
 }
 
 .content p {
@@ -122,6 +129,139 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #3D8D7A;
+}
+
+.icon-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(45, 121, 109, 0.2);
+}
+
+.icon-box .tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #2D796D;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1000;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+.icon-box .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px;
+    border-style: solid;
+    border-color: #2D796D transparent transparent transparent;
+}
+
+.icon-box:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .icon-box .tooltip {
+        width: 140px;
+        font-size: 11px;
+        padding: 8px;
+        /* Keep tooltip on top but make it smaller */
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-bottom: 10px;
+    }
+
+    .icon-box .tooltip::after {
+        /* Keep arrow pointing down */
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 6px;
+        border-style: solid;
+        border-color: #2D796D transparent transparent transparent;
+    }
+
+    .tooltip h3 {
+        font-size: 11px;
+        margin-bottom: 4px;
+    }
+
+    .tooltip p {
+        font-size: 10px;
+        line-height: 1.3;
+    }
+
+    /* Remove side positioning for rightmost icons */
+    .icon-box:last-child .tooltip {
+        left: 50%;
+        right: auto;
+        margin-left: 0;
+        transform: translateX(-50%);
+    }
+
+    .icon-box:last-child .tooltip::after {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        border-color: #2D796D transparent transparent transparent;
+    }
+}
+
+/* Extra small devices */
+@media screen and (max-width: 380px) {
+    .feature-icons {
+        gap: 8px;
+    }
+
+    .icon-box {
+        width: 60px;
+        height: 60px;
+    }
+
+    .icon-box .tooltip {
+        width: 120px;
+        font-size: 10px;
+        padding: 6px;
+    }
+
+    .tooltip h3 {
+        font-size: 10px;
+        margin-bottom: 3px;
+    }
+
+    .tooltip p {
+        font-size: 9px;
+        line-height: 1.2;
+    }
+}
+
+.tooltip h3 {
+    font-size: 14px;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.tooltip p {
+    font-size: 12px;
+    margin: 0;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .icon-box img {
@@ -169,3 +309,252 @@
       min-height: 100vh;
     }
   }
+
+/* Desktop styles */
+@media (min-width: 1024px) {
+    .welcome-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 3rem;
+    }
+
+    .circles {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        pointer-events: none;
+    }
+
+    .circle-1 {
+        width: 300px;
+        height: 300px;
+        top: -80px;
+        left: -80px;
+    }
+
+    .circle-2 {
+        width: 220px;
+        height: 220px;
+        top: 20%;
+        right: -40px;
+        left: auto;
+    }
+
+    .circle-3 {
+        width: 150px;
+        height: 150px;
+        bottom: -40px;
+        left: 30%;
+        top: auto;
+    }
+
+    .logo-container {
+        margin: 0 auto 50px;
+        width: 150px;
+        height: 150px;
+    }
+
+    .logo img {
+        width: 130%;
+    }
+
+    .content {
+        max-width: 700px;
+        margin: 0 auto 60px;
+    }
+
+    .content h1 {
+        font-size: 38px;
+        margin-bottom: 20px;
+        letter-spacing: -0.3px;
+    }
+
+    .content p {
+        font-size: 18px;
+        line-height: 1.5;
+        color: #4A4A4A;
+        max-width: 550px;
+        margin: 0 auto;
+    }
+
+    .feature-icons {
+        max-width: 900px;
+        gap: 30px;
+        margin-bottom: 60px;
+    }
+
+    .icon-box {
+        width: 100px;
+        height: 100px;
+        border-radius: 20px;
+    }
+
+    .icon-box img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .cta-section {
+        margin-top: 30px;
+    }
+
+    .cta-section p {
+        font-size: 20px;
+        margin-bottom: 20px;
+        color: #2D796D;
+    }
+
+    .get-started-btn {
+        padding: 16px 40px;
+        font-size: 16px;
+        border-radius: 10px;
+        min-width: 220px;
+        letter-spacing: 0.3px;
+    }
+
+    .terms-checkbox {
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .about-link {
+        font-size: 16px;
+        margin-bottom: 25px;
+    }
+}
+
+.terms-checkbox {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Custom checkbox styling */
+.terms-checkbox input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: relative;
+    display: inline-block;
+    height: 20px;
+    width: 20px;
+    background-color: #fff;
+    border: 2px solid #2D796D;
+    border-radius: 50%;
+    margin-right: 10px;
+    vertical-align: middle;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* On mouse-over */
+.terms-checkbox:hover input ~ .checkmark {
+    background-color: #f0f8f6;
+}
+
+/* When the checkbox is checked */
+.terms-checkbox input:checked ~ .checkmark {
+    background-color: #2D796D;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.terms-checkbox input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Style the checkmark/indicator */
+.terms-checkbox .checkmark:after {
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.terms-checkbox label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    line-height: 1.4;
+}
+
+.terms-checkbox a {
+    color: #2D796D;
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 3px;
+}
+
+.terms-checkbox a:hover {
+    text-decoration: underline;
+}
+
+/* Mobile responsiveness for checkbox text */
+@media screen and (max-width: 480px) {
+    .terms-checkbox {
+        font-size: 12px;
+    }
+    
+    .checkmark {
+        height: 18px;
+        width: 18px;
+    }
+    
+    .terms-checkbox .checkmark:after {
+        left: 5px;
+        top: 2px;
+        width: 4px;
+        height: 8px;
+    }
+}
+
+@media screen and (max-width: 360px) {
+    .terms-checkbox {
+        font-size: 11px;
+    }
+    
+    .checkmark {
+        height: 16px;
+        width: 16px;
+        margin-right: 8px;
+    }
+    
+    .terms-checkbox .checkmark:after {
+        left: 5px;
+        top: 1px;
+        width: 3px;
+        height: 7px;
+    }
+}
+
+.about-link {
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.about-link a {
+    color: #2D796D;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.about-link a:hover {
+    text-decoration: underline;
+}

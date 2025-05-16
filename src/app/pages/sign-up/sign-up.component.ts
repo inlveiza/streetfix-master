@@ -3,11 +3,13 @@ import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UserService } from '../../services/user.service';
+import { EmailVerificationComponent } from '../../components/email-verification/email-verification.component';
+import { signOut } from '@angular/fire/auth';
 
 @Component({
   selector: 'app-sign-up',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, EmailVerificationComponent],
   templateUrl: './sign-up.component.html',
   styleUrls: ['./sign-up.component.css']
 })
@@ -19,6 +21,8 @@ export class SignUpComponent implements OnInit {
   showConfirmPassword = false;
   successMessage = '';
   errorMessage = '';
+  showVerificationDialog = false;
+  userEmail = '';
 
   constructor(
     private formBuilder: FormBuilder,
@@ -90,6 +94,7 @@ export class SignUpComponent implements OnInit {
       this.isLoading = true;
       try {
         const { email, password, fullName, address } = this.signUpForm.value;
+        this.userEmail = email; // Store the email for the verification dialog
         
         // Create user account
         await this.userService.signUp(email, password, {
@@ -97,15 +102,20 @@ export class SignUpComponent implements OnInit {
           address
         });
 
-        // Sign out the user after account creation
-        await this.userService.signOut();
+        // Sign out the user but don't redirect (we'll use Auth directly to avoid the redirection)
+        try {
+          await signOut(this.userService.getAuth());
+        } catch (signOutError) {
+          console.error('Error signing out:', signOutError);
+        }
 
-        this.successMessage = 'Account created successfully! Please check your email for verification instructions before signing in.';
+        // Set success message
+        this.successMessage = 'Account created successfully!';
         
-        // Redirect to sign-in page after a short delay
-        setTimeout(() => {
-          this.router.navigate(['/sign-in']);
-        }, 3000);
+        // Show verification dialog immediately
+        this.showVerificationDialog = true;
+        console.log('Verification dialog should be visible', this.showVerificationDialog, this.userEmail);
+        
       } catch (error: any) {
         this.errorMessage = error.message || 'An error occurred during sign up.';
       } finally {
@@ -114,5 +124,11 @@ export class SignUpComponent implements OnInit {
     } else {
       this.errorMessage = 'Please fill in all required fields correctly.';
     }
+  }
+
+  onVerificationConfirmed() {
+    console.log('Verification confirmed, redirecting to sign-in');
+    this.showVerificationDialog = false;
+    this.router.navigate(['/sign-in']);
   }
 }

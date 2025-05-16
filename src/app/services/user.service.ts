@@ -165,6 +165,11 @@ export class UserService {
     }
   }
 
+  // Returns the Auth instance without navigation
+  getAuth(): Auth {
+    return this.auth;
+  }
+
   async getUserData(uid: string): Promise<User | null> {
     try {
       const userDoc = doc(this.firestore, 'users', uid);

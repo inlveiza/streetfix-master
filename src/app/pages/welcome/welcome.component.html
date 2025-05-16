@@ -18,23 +18,54 @@
 
     <div class="feature-icons">
         <div class="icon-box">
-            <img src="assets/1.png" alt="Chat Icon">
+            <img src="assets/1.png" alt="Report Dashboard">
+            <div class="tooltip">
+                <h3>Report Dashboard</h3>
+                <p>Displays all submitted reports with real-time status updates, allowing users and admins to track progress.</p>
+            </div>
         </div>
         <div class="icon-box">
-            <img src="assets/2.png" alt="Mountain Icon">
+            <img src="assets/2.png" alt="Upload Picture">
+            <div class="tooltip">
+                <h3>Upload Picture</h3>
+                <p>Easily upload and attach photos to your reports to better illustrate community issues.</p>
+            </div>
         </div>
         <div class="icon-box">
-            <img src="assets/3.png" alt="Location Icon">
+            <img src="assets/3.png" alt="GPS Tracking">
+            <div class="tooltip">
+                <h3>GPS Tracking</h3>
+                <p>Automatically capture location data to accurately pinpoint reported issues on the map.</p>
+            </div>
         </div>
         <div class="icon-box">
-            <img src="assets/4.png" alt="Fix Icon">
+            <img src="assets/4.png" alt="Community Upvoting">
+            <div class="tooltip">
+                <h3>Community Upvoting</h3>
+                <p>Vote on reports to highlight the most pressing issues in your community.</p>
+            </div>
         </div>
     </div>
 
     <div class="cta-section">
         <p>Ready to take action?</p>
-        <button class="get-started-btn" (click)="goToSignIn()">Get Started Now</button>
-
+        
+        <div class="terms-checkbox">
+            <label for="terms-check">
+                <input type="checkbox" id="terms-check" [(ngModel)]="termsAccepted">
+                <span class="checkmark"></span>
+                I have read and agree to the <a href="javascript:void(0)" (click)="showTerms()">Terms and Conditions</a>
+            </label>
+        </div>
+        
+        <div class="about-link">
+            <a href="javascript:void(0)" (click)="showAbout()">About StreetFix</a>
+        </div>
+        
+        <button class="get-started-btn" (click)="goToSignIn()" [disabled]="!termsAccepted">Get Started Now</button>
     </div>
 </div>
+
+<app-terms-and-conditions [isVisible]="termsVisible" (closed)="termsVisible = false"></app-terms-and-conditions>
+<app-about [isVisible]="aboutVisible" (closed)="aboutVisible = false"></app-about>
   

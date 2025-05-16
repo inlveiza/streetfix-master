@@ -1,0 +1,35 @@
+<div class="modal-overlay" *ngIf="isVisible" (click)="closeModal($event)">
+    <div class="modal-content">
+        <div class="logo-container">
+            <img src="assets/streetfix-logo.png" alt="StreetFix Logo">
+            <button class="close-btn" (click)="close()">&times;</button>
+        </div>
+        
+        <div class="content-container">
+            <h2>Terms & Conditions</h2>
+            
+            <p class="intro-text">By using the StreetFix web application, you agree to the following terms:</p>
+            
+            <ol class="terms-list">
+                <li>
+                    <strong>User Responsibility</strong> - You are responsible for providing accurate and truthful information when submitting complaints or using any features within the app.
+                </li>
+                <li>
+                    <strong>Proper Use</strong> - you agree not to use StreetFix for any illegal, harmful, or misleading purposes.
+                </li>
+                <li>
+                    <strong>Data Usage</strong> - Information you provide may be shared with authorized municipal departments to facilitate complaint resolution. Personal information will be handled in accordance with our privacy practices.
+                </li>
+                <li>
+                    <strong>Account Security</strong> - You are responsible for maintaining the confidentiality of your account credentials.
+                </li>
+                <li>
+                    <strong>Service Availability</strong> - While we strive for uninterrupted service, we do not guarantee that the app will always be available or error-free.
+                </li>
+                <li>
+                    <strong>Changes</strong> - We reserve the right to update these Terms and Conditions at any time. Continued use of the app constitutes acceptance of those changes.
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>

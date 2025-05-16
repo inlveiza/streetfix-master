@@ -1,0 +1,23 @@
+<div class="modal-overlay" *ngIf="isVisible" (click)="closeModal($event)">
+    <div class="modal-content">
+        <div class="logo-container">
+            <img src="assets/streetfix-logo.png" alt="StreetFix Logo">
+            <button class="close-btn" (click)="close()">&times;</button>
+        </div>
+        
+        <div class="content-container">
+            <h2>About StreetFix</h2>
+            
+            <div class="about-section">
+                <h3>Welcome to StreetFix</h3>
+                <p>Your voice matters. StreetFix empowers you to report issues in your community quickly and easily, helping local authorities take action faster. Together, let's make our streets better for everyone.</p>
+            </div>
+            
+            <div class="about-section">
+                <p>StreetFix is a civic engagement platform that empowers communities to collaborate with local authorities in maintaining public infrastructure. Our system provides a direct channel for citizens to report issues while enabling municipalities to efficiently track and resolve concerns.</p>
+                
+                <p>By bridging the gap between residents and government services, StreetFix fosters transparent communication and accountability, transforming community observations into actionable improvements for better public spaces.</p>
+            </div>
+        </div>
+    </div>
+</div>
