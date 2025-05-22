@@ -12,7 +12,7 @@
     </div>
 
     <div class="content">
-        <h1>Welcome to StreetFix</h1>
+        <h1 (click)="showAbout()" class="clickable-header">Welcome to StreetFix</h1>
         <p>Many community issues go unreported due to lack of an efficient system. StreetFix makes it easy to bring attention to problems that need fixing.</p>
     </div>
 
@@ -21,34 +21,34 @@
             <img src="assets/1.png" alt="Report Dashboard">
             <div class="tooltip">
                 <h3>Report Dashboard</h3>
-                <p>Displays all submitted reports with real-time status updates, allowing users and admins to track progress.</p>
+                <p>Stay informed every step of the way. The dashboard displays all submitted reports along with their current status in real time, so both users and administrators can track updates and progress with ease.</p>
             </div>
         </div>
         <div class="icon-box">
             <img src="assets/2.png" alt="Upload Picture">
             <div class="tooltip">
                 <h3>Upload Picture</h3>
-                <p>Easily upload and attach photos to your reports to better illustrate community issues.</p>
+                <p>Make your reports more impactful. Users can upload clear, relevant images to support their submissions, helping authorities better understand the issue and take appropriate action faster.</p>
             </div>
         </div>
         <div class="icon-box">
             <img src="assets/3.png" alt="GPS Tracking">
             <div class="tooltip">
                 <h3>GPS Tracking</h3>
-                <p>Automatically capture location data to accurately pinpoint reported issues on the map.</p>
+                <p>No need to manually enter the location. StreetFix automatically pinpoints the exact spot of the reported issue, making it easier to identify and respond to problems quickly and accurately.</p>
             </div>
         </div>
         <div class="icon-box">
             <img src="assets/4.png" alt="Community Upvoting">
             <div class="tooltip">
                 <h3>Community Upvoting</h3>
-                <p>Vote on reports to highlight the most pressing issues in your community.</p>
+                <p>Let your voice be heard. Users can upvote reports they find important, helping bring the most urgent issues to the top of the list so local authorities know what to prioritize first.</p>
             </div>
         </div>
     </div>
 
     <div class="cta-section">
-        <p>Ready to take action?</p>
+        <p><b>Ready to take action?</b></p>
         
         <div class="terms-checkbox">
             <label for="terms-check">
@@ -58,14 +58,21 @@
             </label>
         </div>
         
-        <div class="about-link">
-            <a href="javascript:void(0)" (click)="showAbout()">About StreetFix</a>
-        </div>
-        
-        <button class="get-started-btn" (click)="goToSignIn()" [disabled]="!termsAccepted">Get Started Now</button>
+        <button class="get-started-btn" (click)="handleGetStarted()">Get Started Now</button>
     </div>
-</div>
 
-<app-terms-and-conditions [isVisible]="termsVisible" (closed)="termsVisible = false"></app-terms-and-conditions>
-<app-about [isVisible]="aboutVisible" (closed)="aboutVisible = false"></app-about>
+    <!-- Error Popup -->
+    <div class="error-popup" *ngIf="showError" (click)="closeError()">
+        <div class="error-content" (click)="$event.stopPropagation()">
+            <div class="error-logo-container">
+                <img src="assets/streetfix-logo.png" alt="StreetFix Logo">
+            </div>
+            <p>To continue, please confirm your acceptance of the Terms and Conditions.</p>
+            <button class="error-close-btn" (click)="closeError()">OK</button>
+        </div>
+    </div>
+
+    <app-terms-and-conditions [isVisible]="termsVisible" (closed)="termsVisible = false"></app-terms-and-conditions>
+    <app-about [isVisible]="aboutVisible" (closed)="aboutVisible = false"></app-about>
+</div>
   

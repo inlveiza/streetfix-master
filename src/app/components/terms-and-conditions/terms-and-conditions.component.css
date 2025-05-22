@@ -47,6 +47,13 @@
     padding-top: 10px;
 }
 
+.content-container p:last-child {
+    font-size: 12px;
+    line-height: 1.4;
+    color: #333;
+    margin-top: 15px;
+}
+
 h2 {
     color: #000;
     font-size: 22px;
@@ -56,7 +63,7 @@ h2 {
 }
 
 .intro-text {
-    font-size: 14px;
+    font-size: 12px;
     margin-bottom: 20px;
     color: #333;
     line-height: 1.4;
@@ -70,9 +77,19 @@ h2 {
 
 .terms-list li {
     margin-bottom: 15px;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1.4;
     color: #333;
+}
+
+.terms-list ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.terms-list ul li {
+    margin: 0;
+    padding: 0;
 }
 
 .terms-list strong {
@@ -128,7 +145,7 @@ h2 {
 
 .terms-section p {
     margin: 0 0 12px 0;
-    font-size: 0.9rem;
+    font-size: 12px;
     line-height: 1.5;
     color: #555;
 }
@@ -181,7 +198,7 @@ h2 {
     }
     
     .intro-text {
-        font-size: 16px;
+        font-size: 12px;
         margin-bottom: 25px;
     }
     
@@ -191,7 +208,7 @@ h2 {
     
     .terms-list li {
         margin-bottom: 20px;
-        font-size: 16px;
+        font-size: 12px;
         line-height: 1.5;
     }
 }
@@ -216,11 +233,11 @@ h2 {
     }
     
     .intro-text {
-        font-size: 18px;
+        font-size: 12px;
     }
     
     .terms-list li {
-        font-size: 17px;
+        font-size: 12px;
         line-height: 1.6;
     }
 }

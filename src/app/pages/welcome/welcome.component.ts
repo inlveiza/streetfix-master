@@ -1,9 +1,9 @@
-import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TermsAndConditionsComponent } from '../../components/terms-and-conditions/terms-and-conditions.component';
+import { Router } from '@angular/router';
 import { AboutComponent } from '../../components/about/about.component';
+import { TermsAndConditionsComponent } from '../../components/terms-and-conditions/terms-and-conditions.component';
 
 @Component({
   selector: 'app-welcome',
@@ -18,8 +18,21 @@ export class WelcomeComponent implements OnInit {
   termsAccepted = false;
   termsVisible = false;
   aboutVisible = false;
+  showError = false;
 
   constructor(private router: Router) {}
+
+  handleGetStarted(): void {
+    if (!this.termsAccepted) {
+      this.showError = true;
+      return;
+    }
+    this.goToSignIn();
+  }
+
+  closeError(): void {
+    this.showError = false;
+  }
 
   goToSignIn(): void {
     this.router.navigate(['/sign-in']);
