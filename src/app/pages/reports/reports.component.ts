@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Auth, onAuthStateChanged, signOut } from '@angular/fire/auth';
-import { Firestore, collection, deleteDoc, doc, getDoc, increment, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from '@angular/fire/firestore';
+import { Firestore, collection, deleteDoc, doc, getDoc, getDocs, increment, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from '@angular/fire/firestore';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { LogoutConfirmationComponent } from '../../components/logout-confirmation/logout-confirmation.component';
+import { StatusConfirmationDialogComponent } from './components/status-confirmation-dialog/status-confirmation-dialog.component';
 
 interface Report {
   id: string;
@@ -34,7 +35,8 @@ interface Report {
     RouterLink,
     FormsModule,
     ReactiveFormsModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    StatusConfirmationDialogComponent
   ],
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.css']
@@ -46,6 +48,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
   showLogoutDialog = false;
   isSubmitting = false;
   defaultAvatarPath = 'assets/profile.png';
+  isAdmin = false;
+  showAdminSetup = false;
+  showStatusConfirmationDialog = false;
+  reportToUpdate: Report | null = null;
+  newStatusToConfirm: 'pending' | 'in_progress' | 'resolved' | null = null;
   private unsubscribe: (() => void) | null = null;
   private authUnsubscribe: (() => void) | null = null;
   console = console;
@@ -59,9 +66,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.authUnsubscribe = onAuthStateChanged(this.auth, (user) => {
+    this.authUnsubscribe = onAuthStateChanged(this.auth, async (user) => {
       if (user) {
         localStorage.setItem('authToken', user.uid);
+        await this.checkUserRole(user.uid);
         this.loadReports();
       } else {
         localStorage.removeItem('authToken');
@@ -271,5 +279,167 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   handleImageLoad(imageUrl: string) {
     console.log('Image loaded successfully:', imageUrl);
+  }
+
+  handleStatusChange(report: Report, newStatus: 'pending' | 'in_progress' | 'resolved'): void {
+    if (!this.isAdmin) {
+      this.snackBar.open('Only administrators can update report status', 'Close', { duration: 3000 });
+      return;
+    }
+
+    // Prevent the status from changing immediately
+    const selectElement = event?.target as HTMLSelectElement;
+    if (selectElement) {
+      selectElement.value = report.status;
+    }
+
+    // Store the report and new status for confirmation
+    this.reportToUpdate = report;
+    this.newStatusToConfirm = newStatus;
+    this.showStatusConfirmationDialog = true;
+  }
+
+  async onStatusChangeConfirmed(): Promise<void> {
+    if (!this.reportToUpdate || !this.newStatusToConfirm) {
+      this.onStatusChangeCancelled();
+      return;
+    }
+
+    try {
+      const reportRef = doc(this.firestore, 'reports', this.reportToUpdate.id);
+
+      if (this.newStatusToConfirm === 'resolved') {
+        // Delete the report if status is resolved
+        await deleteDoc(reportRef);
+        console.log('Report deleted:', this.reportToUpdate.id);
+        this.snackBar.open('Report resolved and deleted successfully', 'Close', { duration: 2000 });
+
+
+
+      } else {
+        // Otherwise, just update the status
+        await updateDoc(reportRef, {
+          status: this.newStatusToConfirm
+        });
+
+        // Update local state only after successful Firestore update
+        // The local state will be updated automatically by the Firestore subscription for deletion.
+        // For status updates, we manually update the local state for immediate feedback.
+        const index = this.reports.findIndex(r => r.id === this.reportToUpdate?.id);
+        if (index !== -1 && this.reportToUpdate) {
+          this.reports[index].status = this.newStatusToConfirm;
+          this.cdr.detectChanges();
+        }
+
+        this.snackBar.open('Report status updated successfully', 'Close', { duration: 2000 });
+      }
+
+    } catch (error) {
+      console.error('Error updating/deleting report status:', error);
+      this.snackBar.open('Error updating report status', 'Close', { duration: 3000 });
+    } finally {
+      this.onStatusChangeCancelled();
+    }
+  }
+
+  onStatusChangeCancelled(): void {
+    this.showStatusConfirmationDialog = false;
+    this.reportToUpdate = null;
+    this.newStatusToConfirm = null;
+  }
+
+  // Function to create an admin user
+  async createAdminUser(userId: string): Promise<void> {
+    try {
+      const adminRef = doc(this.firestore, 'admins', userId);
+      await setDoc(adminRef, {
+        role: 'admin',
+        addedAt: serverTimestamp(),
+        email: this.auth.currentUser?.email || 'unknown'
+      });
+      
+      this.snackBar.open('Admin user created successfully', 'Close', { duration: 2000 });
+      this.isAdmin = true;
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error creating admin user:', error);
+      this.snackBar.open('Error creating admin user', 'Close', { duration: 3000 });
+    }
+  }
+
+  // Function to check if current user is admin
+  async checkIfCurrentUserIsAdmin(): Promise<boolean> {
+    const user = this.auth.currentUser;
+    if (!user) return false;
+
+    try {
+      const adminDoc = await getDoc(doc(this.firestore, 'admins', user.uid));
+      return adminDoc.exists();
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      return false;
+    }
+  }
+
+  private async checkAdminStatus(userId: string): Promise<void> {
+    try {
+      const adminDoc = await getDoc(doc(this.firestore, 'admins', userId));
+      this.isAdmin = adminDoc.exists();
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      this.isAdmin = false;
+    }
+  }
+
+  private async checkInitialAdminSetup(): Promise<void> {
+    try {
+      // Check if there are any admins in the collection
+      const adminsRef = collection(this.firestore, 'admins');
+      const adminsSnapshot = await getDocs(adminsRef);
+      
+      if (adminsSnapshot.empty) {
+        // No admins exist, show the setup button
+        this.showAdminSetup = true;
+      } else {
+        // Admins exist, check if current user is admin
+        await this.checkAdminStatus(this.auth.currentUser?.uid || '');
+      }
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error checking initial admin setup:', error);
+      this.showAdminSetup = false;
+    }
+  }
+
+  async setupInitialAdmin(): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) {
+      this.snackBar.open('You must be logged in to setup admin', 'Close', { duration: 3000 });
+      return;
+    }
+
+    try {
+      await this.createAdminUser(user.uid);
+      this.showAdminSetup = false;
+      this.snackBar.open('Initial admin setup complete', 'Close', { duration: 2000 });
+    } catch (error) {
+      console.error('Error setting up initial admin:', error);
+      this.snackBar.open('Error setting up admin', 'Close', { duration: 3000 });
+    }
+  }
+
+  private async checkUserRole(userId: string): Promise<void> {
+    try {
+      const userDoc = await getDoc(doc(this.firestore, 'users', userId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        this.isAdmin = userData['role'] === 'admin';
+        this.cdr.detectChanges();
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+      this.isAdmin = false;
+    }
   }
 }

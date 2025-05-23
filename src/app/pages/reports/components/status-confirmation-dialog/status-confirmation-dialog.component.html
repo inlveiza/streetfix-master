@@ -1,0 +1,15 @@
+<div class="overlay">
+  <div class="dialog-container">
+    <div class="dialog-header">
+      <img src="assets/streetfix-logo.png" alt="StreetFix Logo" class="dialog-logo">
+    </div>
+    <div class="dialog-content">
+      <h2>Confirm Status Change</h2>
+      <p>Are you sure you want to change the status to <strong>{{ getStatusText(newStatus) }}</strong>?</p>
+    </div>
+    <div class="dialog-footer">
+      <button class="dialog-button cancel-button" (click)="onCancel()">Cancel</button>
+      <button class="dialog-button confirm-button" (click)="onConfirm()">Confirm</button>
+    </div>
+  </div>
+</div> 

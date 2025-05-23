@@ -279,27 +279,151 @@
   color: #333;
 }
 
+.status-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* Status badge styles */
 .status-badge {
-  padding: 0.25rem 0.75rem;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   text-transform: capitalize;
+  display: inline-block;
 }
 
-.status-badge.pending {
-  background-color: #fff3cd;
-  color: #856404;
+/* Status colors for badges */
+.status-container.pending .status-badge {
+  background-color: #ffebee;
+  color: #d32f2f;
+  border: 1px solid #ffcdd2;
 }
 
-.status-badge.in_progress {
-  background-color: #cce5ff;
-  color: #004085;
+.status-container.in_progress .status-badge {
+  background-color: #e3f2fd; /* Light blue background */
+  color: #1565c0; /* Darker blue text */
+  border: 1px solid #90caf9; /* Blue border */
 }
 
-.status-badge.resolved {
-  background-color: #d4edda;
-  color: #155724;
+.status-container.resolved .status-badge {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+/* Status dropdown styles */
+.status-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.status-select {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 30px;
+  text-transform: capitalize;
+  width: 100%;
+  min-width: 120px;
+}
+
+/* Status colors for dropdown */
+.status-container.pending .status-select {
+  background-color: transparent;
+  color: initial;
+  border: 1px solid #ffcdd2;
+}
+
+.status-container.in_progress .status-select {
+  background-color: transparent;
+  color: initial;
+  border: 1px solid #90caf9;
+}
+
+.status-container.resolved .status-select {
+  background-color: transparent;
+  color: initial;
+  border: 1px solid #c8e6c9;
+}
+
+/* Style individual options within the dropdown */
+.status-select option[value="pending"] {
+  color: red;
+}
+
+.status-select option[value="in_progress"] {
+  color: blue;
+}
+
+.status-select option[value="resolved"] {
+  color: green;
+}
+
+/* Dropdown arrow */
+.status-dropdown::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid currentColor;
+  pointer-events: none;
+}
+
+/* Hover states */
+.status-container.pending .status-select:hover {
+  background-color: #ffcdd2;
+}
+
+.status-container.in_progress .status-select:hover {
+  background-color: #bbdefb;
+}
+
+.status-container.resolved .status-select:hover {
+  background-color: #c8e6c9;
+}
+
+.status-select:hover {
+  background-color: #3D8D7A;
+}
+
+/* Focus states */
+.status-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure the dropdown arrow inherits the correct color */
+.status-container.pending .status-dropdown::after {
+  border-top-color: #d32f2f;
+}
+
+.status-container.in_progress .status-dropdown::after {
+  border-top-color: #1565c0;
+}
+
+.status-container.resolved .status-dropdown::after {
+  border-top-color: #2e7d32;
+}
+
+/* Hover states for options */
+.status-select option:hover {
+  background-color: #3D8D7A;
+  color: white;
 }
 
 .report-image {
@@ -407,6 +531,35 @@
 }
 
 .fixed-title-bar { display: none !important; }
+
+.admin-setup-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: #3D8D7A;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.admin-setup-button:hover {
+  background-color: #096A53;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-setup-button i {
+  font-size: 1rem;
+}
 
 @media (max-width: 900px) {
   .primary-header {
@@ -587,4 +740,50 @@
       max-width: 1600px;
       padding: 0 60px;
   }
+}
+
+/* Status Confirmation Dialog CSS */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; 
+}
+
+.dialog-container {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  text-align: center;
+  font-family: 'Arial, sans-serif';
+  position: relative;
+  z-index: 10000;
+}
+
+/* Status Colors */
+.status-container .status-badge.pending,
+.status-container .status-select.pending {
+  background-color: var(--pending-color);
+  color: white;
+}
+
+.status-container .status-badge.in_progress,
+.status-container .status-select.in_progress {
+  background-color: blue;
+  color: white;
+}
+
+.status-container .status-badge.resolved,
+.status-container .status-select.resolved {
+  background-color: var(--resolved-color);
+  color: white;
 }

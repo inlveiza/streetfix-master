@@ -41,13 +41,13 @@
           <label>CATEGORY<span class="required">*</span></label>
           <select formControlName="category" required>
             <option value="" disabled selected>Select a category</option>
-            <option value="road">Road Damage</option>
-            <option value="lighting">Streetlight Issues</option>
-            <option value="drainage">Drainage Problem</option>
-            <option value="sidewalk">Illegal Dumping</option>
-            <option value="sidewalk">Traffic Sign Issues</option>
-            <option value="sidewalk">Pedestrian Hazards</option>
-            <option value="other">Other</option>
+            <option value="Road Damage">Road Damage</option>
+            <option value="Streetlight Issues">Streetlight Issues</option>
+            <option value="Drainage Problem">Drainage Problem</option>
+            <option value="Illegal Dumping">Illegal Dumping</option>
+            <option value="Traffic Sign Issues">Traffic Sign Issues</option>
+            <option value="Pedestrian Hazards">Pedestrian Hazards</option>
+            <option value="Other">Other</option>
           </select>
           <div class="error-message" *ngIf="reportForm.get('category')?.invalid && reportForm.get('category')?.touched">
             Please select a category

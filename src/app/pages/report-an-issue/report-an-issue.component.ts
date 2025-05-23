@@ -39,7 +39,7 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   
   reportForm: FormGroup;
   username: string = 'User';
-  currentLocation: { lat: number; lng: number } | null = null;
+  currentLocation: { lat: number; lng: number } = { lat: 14.832005, lng: 120.282648 }; // Default coordinates
   isSubmitting: boolean = false;
   errorMessage: string = '';
   selectedImage: File | null = null;
@@ -69,8 +69,9 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    // Initialize map first and then request location
+    // Initialize map and immediately request location
     this.initializeMap();
+    this.requestLocationPermission();
   }
 
   private initializeMap() {
@@ -86,7 +87,7 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         this.map = null;
       }
 
-      // Initialize map with Gordon College coordinates as fallback
+      // Initialize map with default coordinates
       this.map = L.map(this.mapContainer.nativeElement, {
         zoomControl: true,
         attributionControl: true,
@@ -96,7 +97,7 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         doubleClickZoom: true,
         boxZoom: true,
         keyboard: true
-      }).setView([14.832, 120.2820], 14.5);
+      }).setView([this.currentLocation.lat, this.currentLocation.lng], 14.5);
 
       // Add tile layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -104,8 +105,8 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         maxZoom: 19
       }).addTo(this.map);
 
-      // Create marker at the center
-      this.marker = L.marker([14.832, 120.2820], {
+      // Create marker at the default location
+      this.marker = L.marker([this.currentLocation.lat, this.currentLocation.lng], {
         draggable: true
       }).addTo(this.map);
 
@@ -124,12 +125,6 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         }
       });
 
-      // Only request location after map is fully initialized
-      this.map.whenReady(() => {
-        console.log('Map is fully initialized, requesting location...');
-        this.requestLocationPermission();
-      });
-
     } catch (error) {
       console.error('Error initializing map:', error);
       this.errorMessage = 'Error initializing map. Please refresh the page.';
@@ -138,25 +133,34 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
 
   private async requestLocationPermission() {
     try {
-      // First check if geolocation is supported
       if (!navigator.geolocation) {
         this.errorMessage = 'Geolocation is not supported by your browser.';
+        this.useDefaultLocation();
         return;
       }
 
-      // Request permission explicitly
       const permission = await navigator.permissions.query({ name: 'geolocation' });
       
       if (permission.state === 'denied') {
         this.errorMessage = 'Location permission is denied. Please enable it in your browser settings.';
+        this.useDefaultLocation();
         return;
       }
 
-      // If permission is granted or prompt, proceed with getting location
+      // Always try to get current location, even if we've tried before
       this.getCurrentLocation();
     } catch (error) {
       console.error('Error requesting location permission:', error);
-      this.errorMessage = 'Error requesting location permission. Please check your browser settings.';
+      this.errorMessage = 'Error requesting location permission. Using default location.';
+      this.useDefaultLocation();
+    }
+  }
+
+  private useDefaultLocation() {
+    this.updateLocation(14.832005, 120.282648);
+    if (this.map && this.marker) {
+      this.marker.setLatLng([14.832005, 120.282648]);
+      this.map.setView([14.832005, 120.282648], 14.5);
     }
   }
 
@@ -165,9 +169,9 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     this.errorMessage = '';
 
     const options: PositionOptions = {
-      enableHighAccuracy: true, // Force high accuracy
-      timeout: 10000, // 10 second timeout
-      maximumAge: 0 // Don't use cached position
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -185,21 +189,17 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
 
           // Ensure map and marker exist
           if (this.map && this.marker) {
-            // First update marker position
+            // Update marker position
             this.marker.setLatLng([newLocation.lat, newLocation.lng]);
             
-            // Then pan the map to the new location
-            this.map.setView([newLocation.lat, newLocation.lng], 14.5, {
+            // Pan the map to the new location
+            this.map.setView([newLocation.lat, newLocation.lng], 16, {
               animate: true,
               duration: 1
             });
 
             // Update form values
             this.updateLocation(newLocation.lat, newLocation.lng);
-            
-            console.log('Map updated with GPS location:', newLocation);
-          } else {
-            console.error('Map or marker not initialized when receiving GPS location');
           }
 
           this.isLocating = false;
@@ -210,11 +210,7 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         this.ngZone.run(() => {
           this.errorMessage = this.getLocationErrorMessage(error);
           this.isLocating = false;
-          
-          // If location fails, ensure we're still centered on Gordon College
-          if (this.map) {
-            this.map.setView([14.832, 120.2820], 14.5);
-          }
+          this.useDefaultLocation();
         });
       },
       options

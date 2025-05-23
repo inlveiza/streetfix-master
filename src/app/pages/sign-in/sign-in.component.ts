@@ -32,7 +32,9 @@ export class SignInComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Component initialization
+    // Clear any stale auth data on component initialization
+    localStorage.clear();
+    console.log('Cleared localStorage on sign-in page load');
   }
 
   strictEmailValidator(control: AbstractControl): ValidationErrors | null {
@@ -76,11 +78,14 @@ export class SignInComponent implements OnInit {
       try {
         const { email, password } = this.signInForm.value;
         
+        // Clear any existing auth data before signing in
+        localStorage.clear();
+        
         // Attempt to sign in
         await this.userService.signIn(email, password);
         
-        // If successful, navigate to profile
-        this.router.navigate(['/profile']);
+        // Navigate to profile page
+        this.router.navigate(['/profile'], { replaceUrl: true });
       } catch (error: any) {
         // Handle specific error cases
         if (error.message === 'auth/unverified-email') {
@@ -93,6 +98,8 @@ export class SignInComponent implements OnInit {
         } else {
           this.errorMessage = error.message || 'An error occurred while signing in.';
         }
+        // Clear any partial auth data on error
+        localStorage.clear();
       } finally {
         this.isLoading = false;
       }

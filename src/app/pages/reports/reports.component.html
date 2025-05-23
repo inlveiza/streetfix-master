@@ -19,6 +19,11 @@
     </button>
   </div>
   <h1 class="reports-title">REPORTS</h1>
+  <!-- Admin Setup Button -->
+  <button *ngIf="showAdminSetup" class="admin-setup-button" (click)="setupInitialAdmin()">
+    <i class="fas fa-user-shield"></i>
+    Setup Admin
+  </button>
 </div>
 
 <!-- Logout Confirmation Dialog -->
@@ -27,6 +32,14 @@
   (confirm)="onLogoutConfirmed()"
   (cancel)="onLogoutCancelled()">
 </app-logout-confirmation>
+
+<!-- Status Change Confirmation Dialog -->
+<app-status-confirmation-dialog
+  *ngIf="showStatusConfirmationDialog"
+  [newStatus]="newStatusToConfirm || 'pending'"
+  (confirm)="onStatusChangeConfirmed()"
+  (cancel)="onStatusChangeCancelled()">
+</app-status-confirmation-dialog>
 
 <!-- Sort Button -->
 <div class="sort-button-container">
@@ -60,8 +73,22 @@
           <i class="fas fa-user-circle"></i>
           <span>{{ report.userEmail ? report.userEmail.split('@')[0] : 'Anonymous' }}</span>
         </div>
-        <div class="status-badge" [ngClass]="report.status">
-          {{ report.status }}
+        <!-- Status Display -->
+        <div class="status-container" [ngClass]="{
+          'pending': report.status === 'pending',
+          'in_progress': report.status === 'in_progress',
+          'resolved': report.status === 'resolved'
+        }">
+          <div class="status-dropdown" *ngIf="isAdmin">
+            <select [value]="report.status" (change)="handleStatusChange(report, $event.target.value)" class="status-select">
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+            </select>
+          </div>
+          <div class="status-badge" *ngIf="!isAdmin">
+            {{ report.status | titlecase }}
+          </div>
         </div>
       </div>
 

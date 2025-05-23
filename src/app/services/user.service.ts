@@ -114,18 +114,23 @@ export class UserService {
 
   async signIn(email: string, password: string): Promise<UserCredential> {
     try {
+      console.log('Starting sign in process...');
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+      console.log('User authenticated:', userCredential.user.uid);
       
       // Check if email is verified
       if (!userCredential.user.emailVerified) {
+        console.log('Email not verified');
         throw new Error('auth/unverified-email');
       }
 
       // Check if user document exists
       const userDoc = doc(this.firestore, 'users', userCredential.user.uid);
       const userSnap = await getDoc(userDoc);
+      console.log('User document exists:', userSnap.exists());
 
       if (!userSnap.exists()) {
+        console.log('Creating new user document...');
         // Create user document if it doesn't exist
         const newUser: User = {
           uid: userCredential.user.uid,
@@ -142,25 +147,52 @@ export class UserService {
           emailVerified: userCredential.user.emailVerified
         };
         await setDoc(userDoc, newUser);
+        localStorage.setItem('userRole', 'user');
+        console.log('New user document created with role: user');
       } else {
+        console.log('Updating existing user document...');
         // Update last login timestamp and email verification status
         await updateDoc(userDoc, {
           lastLoginAt: serverTimestamp(),
           emailVerified: userCredential.user.emailVerified
         });
+        // Store the user's role in localStorage
+        const userData = userSnap.data();
+        console.log('User data from Firestore:', userData);
+        const userRole = userData['role'];
+        console.log('Setting user role in localStorage:', userRole);
+        localStorage.setItem('userRole', userRole);
       }
 
+      // Store auth token
+      localStorage.setItem('authToken', userCredential.user.uid);
+      console.log('Auth token stored in localStorage');
+      
       return userCredential;
     } catch (error) {
+      console.error('Sign in error:', error);
       throw new Error(this.handleError(error));
     }
   }
 
   async signOut(): Promise<void> {
     try {
+      console.log('Starting sign out process...');
       await signOut(this.auth);
+      
+      // Clear all auth-related data from localStorage
+      localStorage.clear(); // This will clear all localStorage items
+      
+      // Or if you want to be more specific:
+      // localStorage.removeItem('authToken');
+      // localStorage.removeItem('userRole');
+      // localStorage.removeItem('user');
+      // localStorage.removeItem('userData');
+      
+      console.log('Cleared all localStorage data');
       this.router.navigate(['/sign-in']);
     } catch (error) {
+      console.error('Sign out error:', error);
       throw new Error(this.handleError(error));
     }
   }
@@ -178,5 +210,11 @@ export class UserService {
     } catch (error) {
       throw new Error(this.handleError(error));
     }
+  }
+
+  isAdmin(): boolean {
+    const role = localStorage.getItem('userRole');
+    console.log('Checking admin status. Current role:', role);
+    return role === 'admin';
   }
 } 

@@ -1,30 +1,44 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
-import { ProfileComponent } from './pages/profile/profile.component';
 import { ReportAnIssueComponent } from './pages/report-an-issue/report-an-issue.component';
 import { ReportsComponent } from './pages/reports/reports.component';
-import { SignInComponent } from './pages/sign-in/sign-in.component';
-import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { WelcomeComponent } from './pages/welcome/welcome.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'welcome', pathMatch: 'full' },
-  { path: 'welcome', component: WelcomeComponent },
-  { path: 'sign-in', component: SignInComponent },
-  { path: 'sign-up', component: SignUpComponent },
-  { 
-    path: 'profile', 
-    component: ProfileComponent,
+  {
+    path: '',
+    redirectTo: 'profile',
+    pathMatch: 'full'
+  },
+  {
+    path: 'sign-in',
+    loadComponent: () => import('./pages/sign-in/sign-in.component').then(m => m.SignInComponent)
+  },
+  {
+    path: 'sign-up',
+    loadComponent: () => import('./pages/sign-up/sign-up.component').then(m => m.SignUpComponent)
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [authGuard]
   },
-  { 
-    path: 'reports', 
+  {
+    path: 'reports',
     component: ReportsComponent,
     canActivate: [authGuard]
   },
-  { 
-    path: 'report-an-issue', 
+  {
+    path: 'report-an-issue',
     component: ReportAnIssueComponent,
     canActivate: [authGuard]
+  },
+  {
+    path: 'welcome',
+    component: WelcomeComponent
+  },
+  {
+    path: '**',
+    redirectTo: 'sign-in'
   }
 ];
