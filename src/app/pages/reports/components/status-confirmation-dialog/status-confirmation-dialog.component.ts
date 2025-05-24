@@ -21,6 +21,12 @@ export class StatusConfirmationDialogComponent {
     this.cancel.emit();
   }
 
+  onOverlayClick(event: MouseEvent) {
+    if ((event.target as HTMLElement).classList.contains('logout-overlay')) {
+      this.cancel.emit();
+    }
+  }
+
   getStatusText(status: string): string {
     switch (status) {
       case 'pending': return 'Pending';
