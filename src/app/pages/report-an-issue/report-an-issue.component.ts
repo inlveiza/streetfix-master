@@ -36,6 +36,8 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   private http: HttpClient = inject(HttpClient);
   
   @ViewChild('mapContainer') mapContainer!: ElementRef;
+  @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvasElement') canvasElement!: ElementRef<HTMLCanvasElement>;
   
   reportForm: FormGroup;
   username: string = 'User';
@@ -48,6 +50,8 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   marker: L.Marker | null = null;
   isLocating: boolean = false;
   isSearching: boolean = false;
+  showCamera: boolean = false;
+  stream: MediaStream | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -315,50 +319,80 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
 
   async captureImage() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      await video.play();
-
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(video, 0, 0);
-
-      // Convert canvas to base64
-      const base64Image = canvas.toDataURL('image/jpeg');
-      this.imagePreview = base64Image;
-
-      // Upload the base64 image
-      this.uploadBase64Image(base64Image);
-
-      // Stop all tracks
-      stream.getTracks().forEach(track => track.stop());
+      this.showCamera = true;
+      await this.initializeCamera();
     } catch (error) {
-      console.error('Error accessing camera:', error);
-      this.errorMessage = 'Unable to access camera. Please check your permissions.';
+      console.error('Error initializing camera:', error);
+      this.errorMessage = 'Error accessing camera. Please make sure you have granted camera permissions.';
     }
   }
 
-  private uploadBase64Image(base64Image: string) {
-    this.isSubmitting = true;
-    this.errorMessage = '';
-
-    this.cloudinaryService.uploadImageFromBase64(base64Image).subscribe({
-      next: (response: any) => {
-        console.log('Image uploaded successfully:', response);
-        this.reportForm.patchValue({
-          imageUrl: response.secure_url
-        });
-        this.isSubmitting = false;
-      },
-      error: (error) => {
-        console.error('Error uploading image:', error);
-        this.errorMessage = 'Failed to upload image. Please try again.';
-        this.isSubmitting = false;
+  private async initializeCamera() {
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+      
+      if (this.videoElement && this.videoElement.nativeElement) {
+        this.videoElement.nativeElement.srcObject = this.stream;
       }
-    });
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      throw error;
+    }
+  }
+
+  async takePhoto() {
+    if (!this.videoElement || !this.canvasElement) return;
+
+    const video = this.videoElement.nativeElement;
+    const canvas = this.canvasElement.nativeElement;
+    const context = canvas.getContext('2d');
+
+    if (!context) return;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw the current video frame on the canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert canvas to base64 image
+    const base64Image = canvas.toDataURL('image/jpeg');
+    
+    // Close camera
+    this.closeCamera();
+
+    // Create a File object from the base64 image
+    const byteString = atob(base64Image.split(',')[1]);
+    const mimeString = base64Image.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    
+    const blob = new Blob([ab], { type: mimeString });
+    const file = new File([blob], 'camera-photo.jpg', { type: mimeString });
+
+    // Handle the captured image
+    this.selectedImage = file;
+    this.createImagePreview(file);
+    await this.uploadImage(file);
+  }
+
+  closeCamera() {
+    if (this.stream) {
+      this.stream.getTracks().forEach(track => track.stop());
+      this.stream = null;
+    }
+    this.showCamera = false;
   }
 
   removeImage() {

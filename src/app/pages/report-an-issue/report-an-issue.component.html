@@ -169,3 +169,24 @@
     </div>
   </div>
 </div>
+
+<!-- Camera Modal -->
+<div class="camera-modal" *ngIf="showCamera">
+  <div class="camera-container">
+    <div class="camera-header">
+      <h3>Take a Photo</h3>
+      <button class="close-button" (click)="closeCamera()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="camera-preview">
+      <video #videoElement [srcObject]="stream" autoplay playsinline></video>
+      <canvas #canvasElement style="display: none;"></canvas>
+    </div>
+    <div class="camera-controls">
+      <button class="capture-button" (click)="takePhoto()">
+        <i class="fas fa-camera"></i> Capture
+      </button>
+    </div>
+  </div>
+</div>
