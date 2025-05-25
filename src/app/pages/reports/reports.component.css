@@ -573,6 +573,14 @@
   font-size: 1rem;
 }
 
+.reports-feed-footer {
+  text-align: center; 
+  color:#3D8D7A; 
+  font-weight:600; 
+  margin: 10px 20px 40px 20px; 
+  font-size:1.1rem;
+}
+
 @media (max-width: 900px) {
   .primary-header {
     width: 210px;
