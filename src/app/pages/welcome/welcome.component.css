@@ -257,16 +257,16 @@
 .feature-icons {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 24px;
     margin-bottom: 40px;
     padding: 0 20px;
     width: 100%;
 }
 .icon-box {
-    width: 70px;
-    height: 70px;
+    width: 120px;
+    height: 120px;
     background-color: #F5FAF9;
-    border-radius: 16px;
+    border-radius: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -333,6 +333,16 @@
 
 /* Mobile styles */
 @media screen and (max-width: 768px) {
+    .icon-box {
+        width: 90px;
+        height: 90px;
+        border-radius: 18px;
+    }
+    .icon-box img {
+        width: 60px;
+        height: 60px;
+    }
+
     .icon-box .tooltip {
         width: 140px;
         font-size: 11px;
@@ -428,8 +438,8 @@
 }
 
 .icon-box img {
-    width: 40px;
-    height: 40px;
+    width: 80px;
+    height: 80px;
     object-fit: contain;
 }
 .icon {
@@ -553,8 +563,9 @@
     }
 
     .icon-box img {
-        width: 50px;
-        height: 50px;
+        width: 95px;
+        height: 95px;
+        border-radius: 20px
     }
 
     .cta-section {

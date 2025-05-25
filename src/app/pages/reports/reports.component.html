@@ -55,6 +55,12 @@
     <a href="#" class="sort-option" [class.selected]="currentSort === 'votes-low'" (click)="sortReports('votes-low', $event)">
       Votes • Low to High
     </a>
+    <a href="#" class="sort-option" [class.selected]="currentSort === 'latest'" (click)="sortReports('latest', $event)">
+      Latest
+    </a>
+    <a href="#" class="sort-option" [class.selected]="currentSort === 'oldest'" (click)="sortReports('oldest', $event)">
+      Oldest
+    </a>
   </div>
 </div>
 

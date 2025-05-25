@@ -190,8 +190,19 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.reports.sort((a, b) => {
       if (this.currentSort === 'votes-high') {
         return (b.upvotes || 0) - (a.upvotes || 0);
-      } else {
+      } else if (this.currentSort === 'votes-low') {
         return (a.upvotes || 0) - (b.upvotes || 0);
+      } else if (this.currentSort === 'latest') {
+        // Sort by timestamp descending (latest first)
+        return (b.timestamp?.toDate?.() ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime()) -
+               (a.timestamp?.toDate?.() ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime());
+      } else if (this.currentSort === 'oldest') {
+        // Sort by timestamp ascending (oldest first)
+        return (a.timestamp?.toDate?.() ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime()) -
+               (b.timestamp?.toDate?.() ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime());
+      } else {
+        // Default to votes-high
+        return (b.upvotes || 0) - (a.upvotes || 0);
       }
     });
   }
