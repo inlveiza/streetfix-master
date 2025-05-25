@@ -1,0 +1,55 @@
+<!-- Logo and header -->
+<div class="header">
+    <div class="logo-circle">
+      <img src="assets/logo.png" alt="StreetFix Logo" class="logo-img" />
+    </div>
+    <div class="header-title">
+      <span class="admin-title">ADMIN</span>
+      <button class="logout-btn" title="Logout">
+        <span>⎋</span>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Tabs -->
+  <div class="tabs">
+    <button *ngFor="let tab of tabs"
+            [ngStyle]="{'background-color': selectedTab === tab.value ? tab.color : '#fff'}"
+            [class.active]="selectedTab === tab.value"
+            (click)="selectTab(tab.value)">
+      {{ tab.label }}
+    </button>
+  </div>
+  
+  <!-- Info text -->
+  <div class="info-text">
+    This is your central hub for managing community reports efficiently. Stay informed, take action, and help keep public spaces well-maintained.
+  </div>
+  
+  <!-- Posts -->
+  <div *ngFor="let post of filteredPosts" class="post-card">
+    <div class="post-header">
+      <span class="user-icon">👤</span>
+      <span class="user-name">{{ post.user }}</span>
+      <span class="status-badge" [ngStyle]="{'background-color': getTabColor(post.status)}">
+        {{ getTabLabel(post.status) }}
+        <span>▼</span>
+      </span>
+    </div>
+    <img [src]="post.image" alt="Report image" class="post-image" />
+    <div class="post-details">
+      <div class="category"><b>CATEGORY:</b> {{ post.category }}</div>
+      <div class="location"><b>LOCATION:</b> {{ post.location }}</div>
+      <div class="description"><b>DESCRIPTION:</b> {{ post.description }}</div>
+    </div>
+    <div class="post-footer">
+      <div class="votes">
+        <span class="upvotes">{{ post.upvotes }} <span class="vote-label">Upvotes</span></span>
+        <span class="downvotes">{{ post.downvotes }} <span class="vote-label">Downvotes</span></span>
+      </div>
+      <div class="footer-icon">
+        <span>📍</span>
+      </div>
+    </div>
+  </div>
+  
