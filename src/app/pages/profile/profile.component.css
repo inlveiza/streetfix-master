@@ -64,7 +64,7 @@
 
 .nav-oval {
   background-color: #3D8D7A;
-  border-radius: 25px;
+  border-radius: 25px;]
   padding: 0.4rem;
   display: flex;
   align-items: center;
@@ -85,7 +85,7 @@
 }
 
 .nav-arrow {
-  background: transparent;
+  background: #43a047;
   border: none;
   color: white;
   width: 40px;
@@ -119,7 +119,7 @@
   font-size: 2.5rem;
   font-weight: 800;
   letter-spacing: 2px;
-  margin: 20px 100px 0 0;
+  margin: 20px 169px 0 0;
   padding: 0;
   line-height: 1;
   align-self: flex-end;
@@ -413,7 +413,7 @@
 }
 
 .create-report-btn {
-  background-color: #007bff;
+  background-color: #43a047;
   color: white;
   border: none;
   padding: 12px 24px;

@@ -90,15 +90,16 @@
 }
 
 .nav-arrow {
-  background: transparent;
+  background: #096A53;
   border: none;
   color: white;
-  width: 32px;
-  height: 32px;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  border-radius: 25px;
 }
 
 .reports-title {
