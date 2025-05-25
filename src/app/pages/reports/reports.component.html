@@ -68,69 +68,58 @@
   <!-- Reports Feed -->
   <div class="reports-feed">
     <div class="report-card" *ngFor="let report of reports">
-      <div class="report-header">
+      <!-- Header: Username left, status pill right -->
+      <div class="report-header-row">
         <div class="user-info">
           <i class="fas fa-user-circle"></i>
           <span>{{ report.userEmail ? report.userEmail.split('@')[0] : 'Anonymous' }}</span>
         </div>
-        <!-- Status Display -->
-        <div class="status-container" [ngClass]="{
-          'pending': report.status === 'pending',
-          'in_progress': report.status === 'in_progress',
-          'resolved': report.status === 'resolved'
-        }">
-          <div class="status-dropdown" *ngIf="isAdmin">
-            <select [value]="report.status" (change)="handleStatusChange(report, $any($event.target).value)" class="status-select">
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-            </select>
-          </div>
-          <div class="status-badge" *ngIf="!isAdmin">
-            {{ report.status | titlecase }}
-          </div>
+        <div class="status-pill" [ngClass]="report.status">
+          {{ report.status | titlecase }}
         </div>
       </div>
-
-      <!-- Debug info -->
-      <div class="debug-info" *ngIf="report.imageUrl">
-        <small>Image URL: {{ report.imageUrl }}</small>
+      <div class="report-image" *ngIf="report.imageUrl || (report.images && report.images.length > 0)">
+        <img [src]="report.imageUrl || report.images[0]"
+             alt="Report Image"
+             (error)="handleImageError($event)"
+             (load)="handleImageLoad(report.imageUrl || report.images[0])">
       </div>
-
-      <!-- Image Section -->
-      <div class="report-image" *ngIf="report.imageUrl">
-        <img 
-          [src]="report.imageUrl" 
-          alt="Report Image" 
-          (error)="handleImageError($event)"
-          (load)="handleImageLoad(report.imageUrl)"
-        >
-      </div>
-
-      <div class="report-details">
-        <div class="category">
-          <i class="fas fa-tag"></i>
-          <span>{{ report.category }}</span>
+      <div class="report-details-box">
+        <!-- Only show category, location, description, and coordinates -->
+        <div class="details-category">
+          <i class="fas fa-tag category-icon" style="color:#3D8D7A;"></i>
+          <span class="category-text">{{ report.category }}</span>
         </div>
-        <div class="location">
-          <i class="fas fa-map-marker-alt"></i>
-          <span>{{ report.location }}</span>
+        <div class="details-location" *ngIf="report.address || report.location">
+          <i class="fas fa-map-marker-alt location-icon" style="color:#3D8D7A;"></i>
+          <span class="location-text">{{ report.address || report.location }}</span>
         </div>
-        <div class="description">
-          <i class="fas fa-align-left"></i>
-          <span>{{ report.description }}</span>
+        <div class="details-description" *ngIf="report.description && report.description !== 'pending' && report.description !== 'resolved' && report.description !== 'in_progress'">
+          <i class="fas fa-align-left description-icon" style="color:#3D8D7A;"></i>
+          <span class="description-text">{{ report.description }}</span>
         </div>
-        <div class="coordinates" *ngIf="report.latitude && report.longitude">
-          <i class="fas fa-location-arrow"></i>
-          <span>Lat: {{ report.latitude | number:'1.6-6' }}, Lng: {{ report.longitude | number:'1.6-6' }}</span>
+        <div class="details-coordinates" *ngIf="report.latitude && report.longitude">
+          <i class="fas fa-location-arrow coordinates-icon" style="color:#3D8D7A;"></i>
+          <span class="coordinates-text">Lat: {{ report.latitude | number:'1.6-6' }}, Lng: {{ report.longitude | number:'1.6-6' }}</span>
         </div>
       </div>
-
-      <div class="report-footer">
+      <div class="report-footer-row">
         <button class="upvote-button" (click)="upvoteReport(report)" [disabled]="isSubmitting">
-          <img [src]="getUpvoteIcon(report)" alt="Upvote" [class.active]="report.isUpvoted">
+          <img [src]="getUpvoteIcon(report)" alt="Upvote Icon" class="upvote-arrow">
           <span>{{ report.upvotes || 0 }}</span>
         </button>
+
+        <!-- Status Controls (Admin Only) -->
+        <div *ngIf="isAdmin" class="status-controls">
+          <button 
+            *ngFor="let status of statusOptions"
+            class="status-button"
+            [class.active]="report.status === status"
+            (click)="handleStatusChange(report, status)">
+            {{ status | titlecase }}
+          </button>
+        </div>
+        
         <div class="timestamp">
           {{ report.timestamp?.toDate() | date:'medium' }}
         </div>

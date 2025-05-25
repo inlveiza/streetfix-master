@@ -10,19 +10,22 @@ import { StatusConfirmationDialogComponent } from './components/status-confirmat
 
 interface Report {
   id: string;
-  username: string;
-  status: 'pending' | 'in_progress' | 'resolved';
-  imageUrl: string | null;
-  category: string;
-  location: string;
+  title: string;
   description: string;
-  latitude: number;
-  longitude: number;
-  upvotes: number;
-  isUpvoted: boolean;
-  timestamp: any;
+  category: string;
+  status: 'pending' | 'in_progress' | 'resolved';
+  createdAt: string;
   userId: string;
   userEmail: string;
+  location: string;
+  address: string;
+  images: string[];
+  upvotes?: number;
+  isUpvoted?: boolean;
+  timestamp?: any;
+  imageUrl?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 @Component({
@@ -53,6 +56,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   showStatusConfirmationDialog = false;
   reportToUpdate: Report | null = null;
   newStatusToConfirm: 'pending' | 'in_progress' | 'resolved' | null = null;
+  statusOptions: ('pending' | 'in_progress' | 'resolved')[] = ['pending', 'in_progress', 'resolved'];
   private unsubscribe: (() => void) | null = null;
   private authUnsubscribe: (() => void) | null = null;
   console = console;
@@ -92,39 +96,66 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const reportsRef = collection(this.firestore, 'reports');
     const q = query(reportsRef, orderBy('timestamp', 'desc'));
     
-    this.unsubscribe = onSnapshot(q, (snapshot) => {
+    this.unsubscribe = onSnapshot(q, async (snapshot) => {
       console.log('=== Reports Loading Debug ===');
       console.log('1. Received snapshot from Firestore:', snapshot.size, 'documents');
       
-      const newReports = snapshot.docs.map(doc => {
-        const data = doc.data();
-        console.log('2. Processing document:', doc.id);
+      const user = this.auth.currentUser;
+
+      // Use Promise.all with map to process each document asynchronously
+      const newReports = await Promise.all(snapshot.docs.map(async (docSnapshot) => {
+        const data = docSnapshot.data();
+        console.log('2. Processing document:', docSnapshot.id);
         console.log('3. Document data:', data);
         
-        // Ensure imageUrl is properly handled
-        const imageUrl = data['imageUrl'];
+        // Handle images array and imageUrl
+        const images = data['images'] || [];
+        const imageUrl = data['imageUrl'] || (images.length > 0 ? images[0] : null);
         console.log('4. Image URL from Firestore:', imageUrl);
         
-        const report = {
-          id: doc.id,
-          username: data['userEmail']?.split('@')[0] || 'Anonymous',
-          status: data['status'] || 'pending',
-          imageUrl: imageUrl,
-          category: data['category'],
-          location: data['location'],
+        // Handle location and address
+        const location = data['location'] || data['address'] || '';
+        const address = data['address'] || data['location'] || '';
+        
+        // Check if current user has upvoted this report
+        let isUpvoted = false;
+        if (user) {
+          // Construct the document reference for the user's upvote in the subcollection
+          const userUpvoteRef = doc(this.firestore, 'reports', docSnapshot.id, 'upvotes', user.uid);
+          try {
+             const upvoteDoc = await getDoc(userUpvoteRef);
+             isUpvoted = upvoteDoc.exists();
+             console.log(`User ${user.uid} upvoted report ${docSnapshot.id}: ${isUpvoted}`);
+          } catch (error) {
+             console.error(`Error checking upvote status for report ${docSnapshot.id}:`, error);
+             // Assume not upvoted if there's an error checking
+             isUpvoted = false;
+          }
+        }
+
+        const report = { // Mapping to report object
+          id: docSnapshot.id,
+          title: data['title'],
           description: data['description'],
-          latitude: data['latitude'],
-          longitude: data['longitude'],
-          upvotes: data['upvotes'] || 0,
-          isUpvoted: false,
-          timestamp: data['timestamp'],
+          category: data['category'],
+          status: data['status'],
+          createdAt: data['createdAt'],
           userId: data['userId'],
-          userEmail: data['userEmail']
+          userEmail: data['userEmail'],
+          location: location,
+          address: address,
+          images: images,
+          upvotes: data['upvotes'] || 0,
+          isUpvoted: isUpvoted, // Set isUpvoted based on the check
+          timestamp: data['timestamp'] || data['createdAt'],
+          imageUrl: imageUrl,
+          latitude: data['latitude'],
+          longitude: data['longitude']
         } as Report;
         
         console.log('5. Processed report:', report);
         return report;
-      });
+      }));
       
       console.log('6. New reports array:', newReports);
       this.reports = newReports;
@@ -175,12 +206,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
       const user = this.auth.currentUser;
       if (!user) {
         this.snackBar.open('Please log in to upvote reports', 'Close', { duration: 3000 });
+        this.isSubmitting = false; // Ensure isSubmitting is reset
         return;
       }
 
       const reportRef = doc(this.firestore, 'reports', report.id);
-      const upvotesRef = collection(this.firestore, 'reports', report.id, 'upvotes');
-      const userUpvoteRef = doc(upvotesRef, user.uid);
+      const userUpvoteRef = doc(this.firestore, 'reports', report.id, 'upvotes', user.uid);
 
       // Check if user has already upvoted
       const upvoteDoc = await getDoc(userUpvoteRef);
@@ -191,8 +222,13 @@ export class ReportsComponent implements OnInit, OnDestroy {
         await updateDoc(reportRef, {
           upvotes: increment(-1)
         });
+        
+        // Update local state immediately
         report.upvotes = (report.upvotes || 0) - 1;
         report.isUpvoted = false;
+        this.cdr.detectChanges(); // Trigger change detection
+
+        this.snackBar.open('Upvote removed', 'Close', { duration: 2000 });
       } else {
         // Add upvote
         await setDoc(userUpvoteRef, {
@@ -202,15 +238,15 @@ export class ReportsComponent implements OnInit, OnDestroy {
         await updateDoc(reportRef, {
           upvotes: increment(1)
         });
+
+        // Update local state immediately
         report.upvotes = (report.upvotes || 0) + 1;
         report.isUpvoted = true;
+        this.cdr.detectChanges(); // Trigger change detection
+
+        this.snackBar.open('Report upvoted!', 'Close', { duration: 2000 });
       }
 
-      this.snackBar.open(
-        report.isUpvoted ? 'Report upvoted!' : 'Upvote removed',
-        'Close',
-        { duration: 2000 }
-      );
     } catch (error) {
       console.error('Error upvoting report:', error);
       this.snackBar.open('Error upvoting report', 'Close', { duration: 3000 });
@@ -441,5 +477,28 @@ export class ReportsComponent implements OnInit, OnDestroy {
       console.error('Error checking user role:', error);
       this.isAdmin = false;
     }
+  }
+
+  private mapReportData(doc: any): Report {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      title: data['title'],
+      description: data['description'],
+      category: data['category'],
+      status: data['status'],
+      createdAt: data['createdAt'],
+      userId: data['userId'],
+      userEmail: data['userEmail'],
+      location: data['location'] || data['address'] || '',
+      address: data['address'] || data['location'] || '',
+      images: data['images'] || [],
+      upvotes: data['upvotes'] || 0,
+      isUpvoted: data['isUpvoted'] || false,
+      timestamp: data['createdAt'],
+      imageUrl: data['imageUrl'] || (data['images'] && data['images'][0]) || null,
+      latitude: data['latitude'],
+      longitude: data['longitude']
+    };
   }
 }

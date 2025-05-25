@@ -29,22 +29,56 @@
     (cancel)="onLogoutCancelled()">
   </app-logout-confirmation>
 
-  <!-- Report an Issue Button (replaces sort button) -->
+  <!-- Report an Issue Button -->
   <div class="sort-button-container">
     <button class="sort-dropdown" routerLink="/report-an-issue">REPORT AN ISSUE</button>
   </div>
 
   <!-- Main Content -->
   <div class="content-wrapper">
-    <!-- Profile Cards Container -->
-    <div class="profile-cards-container">
-      <div class="profile-cards" *ngIf="reports && reports.length > 0">
-        <div class="profile-card" *ngFor="let report of reports">
-          <!-- Card content here -->
-          <div class="card-content">
-            <h3>Report #{{report.id}}</h3>
-            <p>{{report.description}}</p>
-            <span class="status">{{report.status}}</span>
+    <div class="reports-feed">
+      <div class="report-card" *ngFor="let report of reports">
+        <!-- Header: Username left, status pill right -->
+        <div class="report-header-row">
+          <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span>{{ report.userEmail ? report.userEmail.split('@')[0] : 'Anonymous' }}</span>
+          </div>
+          <div class="status-pill" [ngClass]="report.status">
+            {{ report.status | titlecase }}
+          </div>
+        </div>
+        <div class="report-image" *ngIf="report.imageUrl || (report.images && report.images.length > 0)">
+          <img [src]="report.imageUrl || report.images[0]"
+               alt="Report Image"
+               (error)="handleImageError($event)"
+               (load)="handleImageLoad(report.imageUrl || report.images[0])">
+        </div>
+        <div class="report-details-box">
+          <div class="details-category">
+            <i class="fas fa-tag category-icon" style="color:#3D8D7A;"></i>
+            <span class="category-text">{{ report.category }}</span>
+          </div>
+          <div class="details-location" *ngIf="report.address || report.location">
+            <i class="fas fa-map-marker-alt location-icon" style="color:#3D8D7A;"></i>
+            <span class="location-text">{{ report.address || report.location }}</span>
+          </div>
+          <div class="details-description">
+            <i class="fas fa-align-left description-icon" style="color:#3D8D7A;"></i>
+            <span class="description-text">{{ report.description }}</span>
+          </div>
+          <div class="details-coordinates" *ngIf="report.latitude && report.longitude">
+            <i class="fas fa-location-arrow coordinates-icon" style="color:#3D8D7A;"></i>
+            <span class="coordinates-text">Lat: {{ report.latitude | number:'1.6-6' }}, Lng: {{ report.longitude | number:'1.6-6' }}</span>
+          </div>
+        </div>
+        <div class="report-footer-row">
+          <div class="upvote-button disabled">
+            <img src="assets/upvote-select.png" alt="Upvote">
+            <span>{{ report.upvotes || 0 }}</span>
+          </div>
+          <div class="timestamp">
+            {{ report.timestamp?.toDate() | date:'medium' }}
           </div>
         </div>
       </div>
@@ -59,7 +93,6 @@
         </div>
       </div>
     </div>
-    
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
       <div class="nav-icon">
@@ -72,17 +105,14 @@
         <img src="assets/ccs-logo.png" alt="Gordon College CCS">
       </div>
     </div>
-
     <!-- Profile Description -->
     <div class="profile-description">
       <p>This is your personal hub for tracking your reports, updates, and contributions to a better community.</p>
     </div>
-
     <!-- Profile Illustration -->
     <div class="profile-illustration">
       <img src="assets/profile-illustration.png" alt="Profile Illustration">
     </div>
-
     <!-- Footer Text -->
     <div class="footer-text">
       <p>This system was developed as a final project for the Application Development course of the College of Computer Studies at Gordon College during the 2024-2025 academic year.</p>
