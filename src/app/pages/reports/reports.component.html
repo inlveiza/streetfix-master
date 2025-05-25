@@ -121,7 +121,8 @@
         </div>
         
         <div class="timestamp">
-          {{ report.timestamp?.toDate() | date:'medium' }}
+          <span class="timestamp-full">{{ report.timestamp?.toDate() | date:'medium' }}</span>
+          <span class="timestamp-compact">{{ report.timestamp?.toDate() | date:'MMM d, h:mm a' }}</span>
         </div>
       </div>
     </div>
