@@ -6,13 +6,21 @@
     </div>
 
     <div class="logo-container">
-        <div class="logo">
-            <img src="assets/streetfix-logo.png" alt="StreetFix Logo">
+        <div class="logo" (click)="showAbout()">
+            <div class="logo-inner">
+                <div class="logo-front">
+                    <img src="assets/streetfix-logo.png" alt="StreetFix Logo">
+                </div>
+                <div class="logo-back">
+                    <img src="assets/streetfix-logo.png" alt="StreetFix Logo">
+                </div>
+            </div>
+            <div class="shine"></div>
         </div>
     </div>
 
     <div class="content">
-        <h1 (click)="showAbout()" class="clickable-header">Welcome to StreetFix</h1>
+        <h1>Welcome to StreetFix</h1>
         <p>Many community issues go unreported due to lack of an efficient system. StreetFix makes it easy to bring attention to problems that need fixing.</p>
     </div>
 

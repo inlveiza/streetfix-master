@@ -71,25 +71,115 @@
 
 .logo-container {
     position: relative;
-    width: 120px;
-    height: 120px;
-    margin: 180px auto 40px;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    perspective: 1000px;
 }
 
 .logo {
+    position: relative;
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: float 3s ease-in-out infinite;
+}
+
+.logo:hover {
+    transform: rotateY(180deg);
+    animation: none;
+}
+
+.logo-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+}
+
+.logo-front, .logo-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
 }
 
-.logo img {
-    width: 120%;
-    height: auto;
+.logo-front img, .logo-back img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+}
+
+.logo-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(45deg, #2196F3, #4CAF50);
+}
+
+.logo-front {
+    background: white;
+}
+
+.shine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+    pointer-events: none;
+}
+
+.logo:hover .shine {
+    transform: translateX(100%);
+}
+
+.logo::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    background: linear-gradient(45deg, #2196F3, #4CAF50);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.logo:hover::before {
+    opacity: 0.5;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.3;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
 }
 
 .content {
@@ -288,6 +378,12 @@
         transform: translateX(-50%);
         border-color: #2D796D transparent transparent transparent;
     }
+
+    .logo-container {
+        width: 150px;
+        height: 150px;
+        margin: 20px auto;
+    }
 }
 
 /* Extra small devices */
@@ -416,9 +512,9 @@
     }
 
     .logo-container {
+        width: 180px;
+        height: 180px;
         margin: 0 auto 50px;
-        width: 150px;
-        height: 150px;
     }
 
     .logo img {
@@ -702,4 +798,13 @@
 @keyframes slideIn {
     from { transform: translateY(-20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) rotateY(0);
+    }
+    50% {
+        transform: translateY(-10px) rotateY(0);
+    }
 }
