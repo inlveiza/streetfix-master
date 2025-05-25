@@ -266,7 +266,7 @@
     width: 120px;
     height: 120px;
     background-color: #F5FAF9;
-    border-radius: 24px;
+    border-radius: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -441,12 +441,14 @@
     width: 80px;
     height: 80px;
     object-fit: contain;
+    border-radius: 25px;
 }
 .icon {
     width: 24px;
     height: 24px;
     background-size: contain;
     background-repeat: no-repeat;
+    border-radius: 25px;
 }
 
 .cta-section {
