@@ -815,10 +815,10 @@
     display: inline;
   }
   .description-text {
-    margin: 20px auto;
+    margin: 20px auto 0 auto;
     text-align: center;
-    font-size: 1rem;
-    width: 100%;
+    font-size: 12px;
+    width: 75%;
     display: block;
   }
 
