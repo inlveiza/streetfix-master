@@ -24,6 +24,16 @@
         <p>Many community issues go unreported due to lack of an efficient system. StreetFix makes it easy to bring attention to problems that need fixing.</p>
     </div>
 
+    <div class="user-flow-section" (mouseenter)="userFlowHovered = true" (mouseleave)="userFlowHovered = false" [class.expanded]="userFlowHovered">
+        <h2>How StreetFix Works</h2>
+        <ol *ngIf="userFlowHovered">
+            <li><b>Create a Report:</b> Fill out a simple form with a description, photo, and location of the issue you want to report.</li>
+            <li><b>Submit Your Report:</b> Once submitted, your report is added to the community dashboard for visibility and tracking.</li>
+            <li><b>Admin Review:</b> Our admin team reviews each report, verifies the details, and updates the status as the issue is addressed.</li>
+            <li><b>Track Progress:</b> You and the community can track the status of all reports in real time, from submission to resolution.</li>
+        </ol>
+    </div>
+
     <div class="feature-icons">
         <div class="icon-box">
             <img src="assets/1.png" alt="Report Dashboard">

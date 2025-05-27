@@ -44,7 +44,7 @@
   left: 100px;
   right: 0;
   height: 150px;
-  z-index: 999;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -63,7 +63,7 @@
 .nav-oval {
   background-color: #3D8D7A;
   border-radius: 25px;
-  padding: 2.5px;
+  padding: 2.1px;
   display: flex;
   align-items: center;
   gap: 1px;
@@ -632,6 +632,26 @@
     display: block;
     font-weight: 600;
   }
+}
+
+@media (max-width: 600px) {
+.secondary-header {
+  left: 80px;
+  height: 120px;
+  border-radius: 0 0 50px 150px;
+}
+.nav-container {
+  margin-right: 10px;
+}
+.reports-title {
+  margin: 20px 100px 0 0;
+}
+
+.nav-oval {
+  padding: 2.1px;
+  gap: 1px;
+}
+
 }
 
 @media (max-width: 600px) {
