@@ -108,6 +108,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
         console.log('2. Processing document:', docSnapshot.id);
         console.log('3. Document data:', data);
         
+        // Skip resolved reports for everyone in the reports dashboard
+        if (data['status'] === 'resolved') {
+          return null;
+        }
+        
         // Handle images array and imageUrl
         const images = data['images'] || [];
         const imageUrl = data['imageUrl'] || (images.length > 0 ? images[0] : null);
@@ -157,8 +162,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
         return report;
       }));
       
-      console.log('6. New reports array:', newReports);
-      this.reports = newReports;
+      // Filter out null values (resolved reports)
+      this.reports = newReports.filter(report => report !== null) as Report[];
+      console.log('6. New reports array:', this.reports);
       this.applyCurrentSort();
       this.cdr.detectChanges();
     }, (error) => {
@@ -354,35 +360,32 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
     try {
       const reportRef = doc(this.firestore, 'reports', this.reportToUpdate.id);
+      
+      // Update the status
+      await updateDoc(reportRef, {
+        status: this.newStatusToConfirm
+      });
 
+      // If the status is resolved, immediately remove it from the user's view
       if (this.newStatusToConfirm === 'resolved') {
-        // Delete the report if status is resolved
-        await deleteDoc(reportRef);
-        console.log('Report deleted:', this.reportToUpdate.id);
-        this.snackBar.open('Report resolved and deleted successfully', 'Close', { duration: 2000 });
-
-
-
+        const index = this.reports.findIndex(r => r.id === this.reportToUpdate?.id);
+        if (index !== -1) {
+          this.reports.splice(index, 1);
+          this.cdr.detectChanges();
+        }
       } else {
-        // Otherwise, just update the status
-        await updateDoc(reportRef, {
-          status: this.newStatusToConfirm
-        });
-
-        // Update local state only after successful Firestore update
-        // The local state will be updated automatically by the Firestore subscription for deletion.
-        // For status updates, we manually update the local state for immediate feedback.
+        // For other status updates, just update the status
         const index = this.reports.findIndex(r => r.id === this.reportToUpdate?.id);
         if (index !== -1 && this.reportToUpdate) {
           this.reports[index].status = this.newStatusToConfirm;
           this.cdr.detectChanges();
         }
-
-        this.snackBar.open('Report status updated successfully', 'Close', { duration: 2000 });
       }
 
+      this.snackBar.open('Report status updated successfully', 'Close', { duration: 2000 });
+
     } catch (error) {
-      console.error('Error updating/deleting report status:', error);
+      console.error('Error updating report status:', error);
       this.snackBar.open('Error updating report status', 'Close', { duration: 3000 });
     } finally {
       this.onStatusChangeCancelled();
@@ -482,12 +485,24 @@ export class ReportsComponent implements OnInit, OnDestroy {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         this.isAdmin = userData['role'] === 'admin';
-        this.cdr.detectChanges();
+        localStorage.setItem('userRole', userData['role']);
+        console.log('User role set to:', userData['role']);
+        
+        // Check if this is the first admin setup
+        if (this.isAdmin) {
+          await this.checkInitialAdminSetup();
+        }
+      } else {
+        this.isAdmin = false;
+        localStorage.setItem('userRole', 'user');
+        console.log('User document not found, defaulting to user role');
       }
     } catch (error) {
       console.error('Error checking user role:', error);
       this.isAdmin = false;
+      localStorage.setItem('userRole', 'user');
     }
+    this.cdr.detectChanges();
   }
 
   private mapReportData(doc: any): Report {

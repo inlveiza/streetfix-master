@@ -84,9 +84,19 @@ export class SignInComponent implements OnInit {
         // Attempt to sign in
         await this.userService.signIn(email, password);
         
-        // Navigate to profile page
-        this.router.navigate(['/profile'], { replaceUrl: true });
+        // Check if user is admin and route accordingly
+        const userRole = localStorage.getItem('userRole');
+        console.log('User role after sign in:', userRole);
+        
+        if (userRole === 'admin') {
+          console.log('User is admin, navigating to admin dashboard');
+          await this.router.navigate(['/admin-dashboard']);
+        } else {
+          console.log('User is not admin, navigating to profile');
+          await this.router.navigate(['/profile']);
+        }
       } catch (error: any) {
+        console.error('Sign in error:', error);
         // Handle specific error cases
         if (error.message === 'auth/unverified-email') {
           this.isEmailUnverified = true;

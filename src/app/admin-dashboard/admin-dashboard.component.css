@@ -1,0 +1,718 @@
+:host {
+  display: block;
+  background: white;
+  min-height: 100vh;
+  margin: 0;
+  overflow-y: auto;
+}
+
+/* Primary Header */
+.primary-header {
+  background-color: #3D8D7A;
+  position: fixed;
+  top: -20px;
+  left: -75px;
+  width: 250px;
+  height: 240px;
+  border-radius: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.logo-container {
+  padding: 90px 0 0 105px;
+}
+
+.logo-oval {
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  width: 120px;
+  height: 120px;
+}
+
+/* Secondary Header */
+.secondary-header {
+  background-color: #A3D1C6;
+  position: fixed;
+  top: 0;
+  left: 100px;
+  right: 0;
+  height: 150px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 15px 100px 15px 100px;
+  border-bottom-left-radius: 200px;
+  border-bottom-right-radius: 100px;
+}
+
+.nav-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-right: 100px;
+}
+
+.nav-oval {
+  background-color: #3D8D7A;
+  border-radius: 25px;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.nav-link.active {
+  background-color: #096A53;
+}
+
+.nav-arrow {
+  background: transparent;
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1001;
+}
+
+.logout-button {
+  background: #096A53;
+  border-radius: 50%;
+  position: relative;
+  z-index: 1001;
+}
+
+.logout-button:hover {
+  background: #075543;
+  transform: scale(1.05);
+}
+
+.logout-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.reports-title {
+  color: #33806a;
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin: 20px 169px 0 0;
+  padding: 0;
+  line-height: 1;
+  align-self: flex-end;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* Reports Overview */
+.reports-overview {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30px;
+}
+
+.overview-card {
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  padding: 15px 20px;
+  text-align: center;
+  width: 30%; /* Adjust as needed */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.overview-card h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.overview-card .count {
+  font-size: 1.8em;
+  font-weight: bold;
+}
+
+.overview-card.pending {
+  border-left: 5px solid #ff9800; /* Orange */
+}
+
+.overview-card.in-progress {
+  border-left: 5px solid #2196f3; /* Blue */
+}
+
+.overview-card.resolved {
+  border-left: 5px solid #4caf50; /* Green */
+}
+
+/* Reports Sections */
+.reports-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.report-section {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+}
+
+.report-section h2 {
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Report Card Layout */
+.report-card {
+  background: #fefefe;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(60,60,60,0.06);
+  margin-bottom: 32px;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  width: 100%; /* Ensure it takes full width of the flex container */
+}
+
+.report-card:hover {
+  box-shadow: 0 4px 12px rgba(60,60,60,0.1);
+  transform: translateY(-2px);
+}
+
+.report-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.user-info i {
+  font-size: 1.2em;
+  color: #3D8D7A;
+}
+
+.status-pill {
+  padding: 0.3rem 0.8rem;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+}
+
+.status-pill.pending {
+  background-color: #ff9800; /* Orange */
+}
+
+.status-pill.in_progress {
+  background-color: #2196f3; /* Blue */
+}
+
+.status-pill.resolved {
+  background-color: #4caf50; /* Green */
+}
+
+.report-image {
+  width: 100%;
+  height: auto; /* Changed from 300px to auto for better responsiveness in grid */
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+.report-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.report-details-box {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.details-category,
+.details-location,
+.details-description,
+.details-coordinates {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.details-category i,
+.details-location i,
+.details-description i,
+.details-coordinates i {
+  font-size: 1.1em;
+  color: #3D8D7A; /* Icon color */
+  margin-top: 3px; /* Align icon better with text */
+}
+
+.details-description span.description-text {
+  white-space: pre-wrap; /* Preserve line breaks in description */
+  word-break: break-word; /* Break long words */
+}
+
+.report-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.status-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.status-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #eee;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.status-button:hover {
+  background-color: #ddd;
+}
+
+.status-button.active {
+  background-color: #3D8D7A;
+  color: white;
+  border-color: #3D8D7A;
+}
+
+.status-button.pending {
+  background-color: #ff9800; /* Orange */
+  color: white;
+}
+
+.status-button.in_progress {
+  background-color: #2196f3; /* Blue */
+  color: white;
+}
+
+.status-button.resolved {
+  background-color: #4caf50; /* Green */
+  color: white;
+}
+
+.timestamp {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.timestamp-full {
+  display: inline;
+}
+
+.timestamp-compact {
+  display: none;
+}
+
+.no-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0e0e0;
+  color: #777;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.no-image-placeholder i {
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.no-image-placeholder small {
+  font-size: 0.8em;
+  margin-top: 5px;
+  word-break: break-all;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .primary-header {
+    top: -40px;
+    left: -95px;
+    width: 200px;
+    height: 200px;
+  }
+
+  .logo-container {
+    padding: 80px 0 0 90px;
+  }
+
+  .logo-oval {
+    width: 70px;
+    height: 70px;
+  }
+
+  .logo {
+    width: 100px;
+    height: 100px;
+  }
+
+  .secondary-header {
+    left: 80px;
+    height: 120px;
+    padding: 10px 80px 10px 80px;
+    border-bottom-left-radius: 150px;
+    border-bottom-right-radius: 80px;
+  }
+
+  .nav-container {
+    margin-right: 80px;
+  }
+
+  .nav-link {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
+
+  .reports-title {
+    font-size: 2rem;
+    margin: 15px 140px 0 0;
+  }
+
+  .content-wrapper {
+    padding-top: 130px; 
+  }
+}
+
+@media (max-width: 600px) {
+  .primary-header {
+    top: -60px;
+    left: -100px;
+    width: 180px;
+    height: 180px;
+  }
+
+  .logo-container {
+    padding: 70px 0 0 80px;
+  }
+
+  .logo-oval {
+    width: 60px;
+    height: 60px;
+  }
+
+  .logo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .secondary-header {
+    left: 60px;
+    height: 100px;
+    padding: 8px 60px 8px 60px;
+    border-bottom-left-radius: 100px;
+    border-bottom-right-radius: 60px;
+  }
+
+  .nav-container {
+    margin-right: 60px;
+    gap: 0.8rem;
+  }
+
+  .nav-oval {
+    padding: 0.3rem;
+    gap: 1rem;
+  }
+
+  .nav-link {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .logout-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .logout-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .reports-title {
+    font-size: 1.8rem;
+    margin: 10px 100px 0 0;
+  }
+
+  .content-wrapper {
+    padding-top: 110px; 
+  }
+}
+
+@media (max-width: 480px) {
+  .primary-header {
+    top: -80px;
+    left: -120px;
+    width: 150px;
+    height: 150px;
+  }
+
+  .logo-container {
+    padding: 60px 0 0 70px;
+  }
+
+  .logo-oval {
+    width: 50px;
+    height: 50px;
+  }
+
+  .logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .secondary-header {
+    left: 40px;
+    height: 80px;
+    padding: 6px 40px 6px 40px;
+    border-bottom-left-radius: 80px;
+    border-bottom-right-radius: 40px;
+  }
+
+  .nav-container {
+    margin-right: 40px;
+    gap: 0.6rem;
+  }
+
+  .nav-oval {
+    padding: 0.2rem;
+    gap: 0.8rem;
+  }
+
+  .nav-link {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .logout-button {
+    width: 25px;
+    height: 25px;
+    padding: 4px;
+  }
+
+  .logout-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .reports-title {
+    font-size: 1.5rem;
+    margin: 8px 80px 0 0;
+  }
+
+  .content-wrapper {
+    padding-top: 90px; 
+  }
+}
+
+@media (max-width: 768px) {
+  .report-image {
+    height: 250px;
+  }
+  
+  .report-details-box {
+    font-size: 0.9rem;
+    gap: 0.6rem;
+  }
+
+  .details-category i,
+  .details-location i,
+  .details-description i,
+  .details-coordinates i {
+    font-size: 1em;
+  }
+  
+  .report-footer-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+
+  .timestamp {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .report-image {
+    height: 200px;
+  }
+
+  .status-pill {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .details-category,
+  .details-location,
+  .details-description,
+  .details-coordinates {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .details-category i,
+  .details-location i,
+  .details-description i,
+  .details-coordinates i {
+    margin-top: 0;
+  }
+
+  .timestamp-full {
+    display: none;
+  }
+
+  .timestamp-compact {
+    display: inline;
+  }
+}
+
+@media (max-width: 360px) {
+  .report-image {
+    height: 180px;
+  }
+
+  .details-description span.description-text {
+    font-size: 0.9rem;
+  }
+}
+
+/* Status Controls */
+.reports-list .report-card .report-footer-row .status-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #eee; /* Default background */
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+  color: #333; /* Ensure text color is visible */
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button:hover {
+  background-color: #ddd;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button.active {
+  background-color: #3D8D7A;
+  color: white;
+  border-color: #3D8D7A;
+}
+
+/* Explicitly style status buttons within reports-list for color */
+.reports-list .report-card .report-footer-row .status-controls .status-button.pending {
+  background-color: #ff9800; /* Orange */
+  color: white;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button.in_progress {
+  background-color: #2196f3; /* Blue */
+  color: white;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button.resolved {
+  background-color: #4caf50; /* Green */
+  color: white;
+}
+
+.timestamp {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.timestamp-full {
+  display: inline;
+}
+
+.timestamp-compact {
+  display: none;
+}
+
+/* Adjust timestamp positioning for larger screens */
+@media (min-width: 769px) {
+  .reports-list .report-card .report-footer-row {
+    flex-direction: column;
+    align-items: flex-end;
+    /* Add margin-top to timestamp if needed for spacing */
+  }
+}

@@ -9,6 +9,7 @@ import { RouterLink } from '@angular/router';
 import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CloudinaryService } from '../../services/cloudinary.service';
+import { UserService } from '../../services/user.service';
 
 interface NominatimResult {
   lat: string;
@@ -26,7 +27,7 @@ interface NominatimResult {
     ReactiveFormsModule,
     HttpClientModule
   ],
-  providers: [CloudinaryService],
+  providers: [CloudinaryService, UserService],
   templateUrl: './report-an-issue.component.html',
   styleUrls: ['./report-an-issue.component.css']
 })
@@ -52,11 +53,18 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   isSearching: boolean = false;
   showCamera: boolean = false;
   stream: MediaStream | null = null;
+  isLoading = false;
+  showPassword = false;
+  showConfirmPassword = false;
+  successMessage = '';
+  isEmailUnverified = false;
+  isAdmin = false;
 
   constructor(
     private fb: FormBuilder,
     private ngZone: NgZone,
-    private cloudinaryService: CloudinaryService
+    private cloudinaryService: CloudinaryService,
+    private userService: UserService
   ) {
     this.reportForm = this.fb.group({
       category: ['', Validators.required],
@@ -68,7 +76,13 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Check if user is admin
+    const user = this.auth.currentUser;
+    if (user) {
+      const userDoc = await getDoc(doc(this.firestore, 'users', user.uid));
+      this.isAdmin = userDoc.exists() && userDoc.data()['role'] === 'admin';
+    }
     this.ensureUserDocument();
   }
 

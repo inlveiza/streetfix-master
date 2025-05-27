@@ -13,7 +13,8 @@
     <div class="nav-container">
       <div class="nav-oval">
         <a routerLink="/reports" class="nav-link" routerLinkActive="active">Reports</a>
-        <a routerLink="/profile" class="nav-link" routerLinkActive="active">Profile</a>
+        <a *ngIf="isAdmin" routerLink="/admin-dashboard" class="nav-link" routerLinkActive="active">Admin Dashboard</a>
+        <a *ngIf="!isAdmin" routerLink="/profile" class="nav-link" routerLinkActive="active">Profile</a>
       </div>
       <button class="nav-arrow" routerLink="/reports">
         <i class="fas fa-arrow-left"></i>

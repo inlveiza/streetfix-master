@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Auth, onAuthStateChanged, signOut } from '@angular/fire/auth';
-import { Firestore, collection, onSnapshot, query, where } from '@angular/fire/firestore';
+import { Auth, signOut } from '@angular/fire/auth';
+import { Firestore, collection, doc, getDoc, onSnapshot, query, where } from '@angular/fire/firestore';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Router, RouterModule } from '@angular/router';
 import { LogoutConfirmationComponent } from '../../components/logout-confirmation/logout-confirmation.component';
+import { ReportService } from '../../services/report.service';
 
 interface Report {
   id: string;
@@ -41,27 +42,28 @@ interface Report {
 export class ProfileComponent implements OnInit, OnDestroy {
   reports: Report[] = [];
   showLogoutDialog = false;
+  isAdmin = false;
   private unsubscribe: (() => void) | null = null;
   private authUnsubscribe: (() => void) | null = null;
 
   constructor(
     private router: Router,
+    private reportService: ReportService,
     private auth: Auth,
     private firestore: Firestore,
     private snackBar: MatSnackBar
   ) {}
 
-  ngOnInit() {
-    console.log('Profile component initialized');
-    this.authUnsubscribe = onAuthStateChanged(this.auth, (user) => {
-      if (user) {
-        console.log('User authenticated:', user.uid);
-        this.loadUserReports(user.uid);
-      } else {
-        console.log('No user authenticated');
-        this.router.navigate(['/sign-in']);
-      }
-    });
+  async ngOnInit() {
+    // Check if user is admin
+    const user = this.auth.currentUser;
+    if (user) {
+      const userDoc = await getDoc(doc(this.firestore, 'users', user.uid));
+      this.isAdmin = userDoc.exists() && userDoc.data()['role'] === 'admin';
+      this.loadUserReports(user.uid);
+    } else {
+      this.router.navigate(['/sign-in']);
+    }
   }
 
   ngOnDestroy() {
@@ -73,72 +75,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadUserReports(userId: string): void {
-    console.log('Loading reports for user:', userId);
-    try {
-      const reportsRef = collection(this.firestore, 'reports');
-      const q = query(
-        reportsRef,
-        where('userId', '==', userId)
-      );
-      
-      this.unsubscribe = onSnapshot(q, 
-        (snapshot) => {
-          console.log('Received snapshot with', snapshot.size, 'documents');
-          try {
-            this.reports = snapshot.docs.map(doc => {
-              const data = doc.data();
-              console.log('Processing document:', doc.id, data);
-              
-              // Handle images array and imageUrl
-              const images = data['images'] || [];
-              const imageUrl = data['imageUrl'] || (images.length > 0 ? images[0] : null);
-              
-              // Handle location and address
-              const location = data['location'] || data['address'] || '';
-              const address = data['address'] || data['location'] || '';
-              
-              return {
-                id: doc.id,
-                title: data['title'],
-                description: data['description'],
-                category: data['category'],
-                status: data['status'],
-                createdAt: data['createdAt'],
-                userId: data['userId'],
-                userEmail: data['userEmail'],
-                location: location,
-                address: address,
-                images: images,
-                upvotes: data['upvotes'] || 0,
-                isUpvoted: data['isUpvoted'] || false,
-                timestamp: data['timestamp'] || data['createdAt'],
-                imageUrl: imageUrl,
-                latitude: data['latitude'],
-                longitude: data['longitude']
-              } as Report;
-            });
-            
-            this.reports.sort((a, b) => {
-              const timeA = a.timestamp?.toDate?.() || new Date(0);
-              const timeB = b.timestamp?.toDate?.() || new Date(0);
-              return timeB.getTime() - timeA.getTime();
-            });
-            console.log('Successfully processed reports:', this.reports);
-          } catch (error: any) {
-            console.error('Error processing reports:', error);
-            this.snackBar.open('Error processing reports data: ' + error.message, 'Close', { duration: 3000 });
-          }
-        },
-        (error: any) => {
-          console.error('Firestore error:', error);
-          this.snackBar.open('Error loading your reports: ' + error.message, 'Close', { duration: 5000 });
-        }
-      );
-    } catch (error: any) {
-      console.error('Error setting up reports query:', error);
-      this.snackBar.open('Error setting up reports query: ' + error.message, 'Close', { duration: 5000 });
-    }
+  private loadUserReports(userId: string) {
+    const reportsQuery = query(
+      collection(this.firestore, 'reports'),
+      where('userId', '==', userId)
+    );
+
+    this.unsubscribe = onSnapshot(reportsQuery, (snapshot) => {
+      this.reports = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Report[];
+    }, (error) => {
+      console.error('Error loading reports:', error);
+      this.snackBar.open('Error loading reports', 'Close', { duration: 3000 });
+    });
   }
 
   navigateToReports() {

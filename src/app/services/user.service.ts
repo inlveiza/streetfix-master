@@ -151,17 +151,18 @@ export class UserService {
         console.log('New user document created with role: user');
       } else {
         console.log('Updating existing user document...');
+        const userData = userSnap.data();
+        const isAdmin = userData['role'] === 'admin';
+
         // Update last login timestamp and email verification status
         await updateDoc(userDoc, {
           lastLoginAt: serverTimestamp(),
           emailVerified: userCredential.user.emailVerified
         });
+        
         // Store the user's role in localStorage
-        const userData = userSnap.data();
-        console.log('User data from Firestore:', userData);
-        const userRole = userData['role'];
-        console.log('Setting user role in localStorage:', userRole);
-        localStorage.setItem('userRole', userRole);
+        localStorage.setItem('userRole', userData['role']);
+        console.log('Setting user role in localStorage:', userData['role']);
       }
 
       // Store auth token
@@ -212,9 +213,24 @@ export class UserService {
     }
   }
 
-  isAdmin(): boolean {
-    const role = localStorage.getItem('userRole');
-    console.log('Checking admin status. Current role:', role);
-    return role === 'admin';
+  async isAdmin(): Promise<boolean> {
+    try {
+      const user = this.auth.currentUser;
+      if (!user) return false;
+
+      // Check users collection for admin role
+      const userDoc = await getDoc(doc(this.firestore, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const isAdmin = userData['role'] === 'admin';
+        console.log('User role from users collection:', userData['role']);
+        return isAdmin;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      return false;
+    }
   }
 } 

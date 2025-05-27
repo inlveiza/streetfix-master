@@ -13,7 +13,8 @@
     <div class="nav-container">
       <div class="nav-oval">
         <a routerLink="/reports" class="nav-link">Reports</a>
-        <a routerLink="/profile" class="nav-link active">Profile</a>
+        <a *ngIf="isAdmin" routerLink="/admin-dashboard" class="nav-link active">Admin Dashboard</a>
+        <a *ngIf="!isAdmin" routerLink="/profile" class="nav-link active">Profile</a>
       </div>
       <button class="nav-arrow logout-button" (click)="handleLogout()">
         <img src="assets/logout.png" alt="Logout" class="logout-icon">

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './guards/admin.guard';
 import { authGuard } from './guards/auth.guard';
 import { ReportAnIssueComponent } from './pages/report-an-issue/report-an-issue.component';
 import { ReportsComponent } from './pages/reports/reports.component';
@@ -7,7 +8,7 @@ import { WelcomeComponent } from './pages/welcome/welcome.component';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'profile',
+    redirectTo: 'welcome',
     pathMatch: 'full'
   },
   {
@@ -32,6 +33,11 @@ export const routes: Routes = [
     path: 'report-an-issue',
     component: ReportAnIssueComponent,
     canActivate: [authGuard]
+  },
+  {
+    path: 'admin-dashboard',
+    loadComponent: () => import('./admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent),
+    canActivate: [authGuard, adminGuard]
   },
   {
     path: 'welcome',
