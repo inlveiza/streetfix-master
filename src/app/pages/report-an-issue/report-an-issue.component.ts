@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, NgZone, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, NgZone, OnInit, ViewChild, inject } from '@angular/core';
 import { FirebaseError } from '@angular/fire/app';
 import { Auth } from '@angular/fire/auth';
 import { Firestore, addDoc, collection, doc, getDoc, setDoc } from '@angular/fire/firestore';
@@ -42,7 +42,8 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   
   reportForm: FormGroup;
   username: string = 'User';
-  currentLocation: { lat: number; lng: number } = { lat: 14.832005, lng: 120.282648 }; // Default coordinates
+  currentLocation: { lat: number; lng: number } | null = null;
+  private hasInitialLocation: boolean = false;
   isSubmitting: boolean = false;
   errorMessage: string = '';
   selectedImage: File | null = null;
@@ -59,37 +60,89 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   successMessage = '';
   isEmailUnverified = false;
   isAdmin = false;
+  private locationWatchId: number | null = null;
+  private readonly DEFAULT_COORDS = {
+    lat: 14.8733952,
+    lng: 120.2782208
+  };
+  private readonly MAX_ACCURACY = 100; // Maximum acceptable accuracy in meters
+  private readonly MIN_ACCURACY = 1; // Minimum acceptable accuracy in meters
+  private isInitialized = false;
+  private locationAttempts = 0;
+  private readonly MAX_ATTEMPTS = 3;
+  private lastLocation: { lat: number; lng: number; accuracy: number } | null = null;
+  private mapInitialized = false;
+  private forceLocationUpdate = false;
+  private hasValidLocation = false;
+  private isFirstLoad = true;
+  private readonly LOCATION_THRESHOLD = 0.0001; // Threshold for considering locations different
+  private readonly GEOLOCATION_OPTIONS: PositionOptions = {
+    enableHighAccuracy: true,
+    timeout: 30000, // Increased timeout to 30 seconds
+    maximumAge: 0
+  };
 
   constructor(
     private fb: FormBuilder,
     private ngZone: NgZone,
     private cloudinaryService: CloudinaryService,
-    private userService: UserService
+    private userService: UserService,
+    private cdr: ChangeDetectorRef
   ) {
     this.reportForm = this.fb.group({
       category: ['', Validators.required],
       location: ['', Validators.required],
       description: ['', [Validators.required, Validators.minLength(10)]],
-      latitude: [null, Validators.required],
-      longitude: [null, Validators.required],
+      latitude: [null, [Validators.required, Validators.min(-90), Validators.max(90)]],
+      longitude: [null, [Validators.required, Validators.min(-180), Validators.max(180)]],
       imageUrl: [null]
+    });
+
+    // Subscribe to form value changes for debugging
+    this.reportForm.valueChanges.subscribe(values => {
+      console.log('Form values changed:', values);
+      // Prevent setting default location
+      if (values.latitude === this.DEFAULT_COORDS.lat && values.longitude === this.DEFAULT_COORDS.lng) {
+        console.log('Detected default location, clearing values');
+        this.reportForm.patchValue({
+          latitude: null,
+          longitude: null,
+          location: ''
+        }, { emitEvent: false });
+        this.hasValidLocation = false;
+      }
     });
   }
 
-  async ngOnInit() {
-    // Check if user is admin
-    const user = this.auth.currentUser;
-    if (user) {
-      const userDoc = await getDoc(doc(this.firestore, 'users', user.uid));
-      this.isAdmin = userDoc.exists() && userDoc.data()['role'] === 'admin';
+  ngOnInit() {
+    // Check if running on HTTPS
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      console.warn('Application is not running on HTTPS. Geolocation may not work.');
     }
-    this.ensureUserDocument();
+
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
+      console.error('Geolocation is not supported by this browser');
+      this.errorMessage = 'Your browser does not support geolocation. Please use a modern browser.';
+      return;
+    }
+
+    // Check if geolocation permission is granted
+    navigator.permissions.query({ name: 'geolocation' }).then(result => {
+      if (result.state === 'denied') {
+        console.error('Geolocation permission denied');
+        this.errorMessage = 'Location access denied. Please enable location services in your browser settings.';
+      }
+    });
   }
 
   ngAfterViewInit() {
-    // Initialize map and immediately request location
-    this.initializeMap();
-    this.requestLocationPermission();
+    // Add a small delay to ensure the map container is ready
+    setTimeout(() => {
+      this.initializeMap();
+      // Automatically get location after map is initialized
+      this.getCurrentLocation();
+    }, 100);
   }
 
   private initializeMap() {
@@ -105,7 +158,9 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         this.map = null;
       }
 
-      // Initialize map with default coordinates
+      console.log('Initializing map...');
+      
+      // Initialize map with a default view of the Philippines
       this.map = L.map(this.mapContainer.nativeElement, {
         zoomControl: true,
         attributionControl: true,
@@ -114,8 +169,12 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         scrollWheelZoom: true,
         doubleClickZoom: true,
         boxZoom: true,
-        keyboard: true
-      }).setView([this.currentLocation.lat, this.currentLocation.lng], 14.5);
+        keyboard: true,
+        center: [12.8797, 121.7740], // Center of Philippines
+        zoom: 6
+      });
+
+      console.log('Map initialized, adding tile layer...');
 
       // Add tile layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -123,25 +182,16 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         maxZoom: 19
       }).addTo(this.map);
 
-      // Create marker at the default location
-      this.marker = L.marker([this.currentLocation.lat, this.currentLocation.lng], {
-        draggable: true
-      }).addTo(this.map);
-
-      // Add marker drag event
-      this.marker.on('dragend', (event: L.DragEndEvent) => {
-        const position = event.target.getLatLng();
-        this.updateLocation(position.lat, position.lng);
-      });
-
       // Add click event to map
       this.map.on('click', (event: L.LeafletMouseEvent) => {
         const { lat, lng } = event.latlng;
+        console.log('Map clicked at:', { lat, lng });
         this.updateLocation(lat, lng);
-        if (this.marker) {
-          this.marker.setLatLng([lat, lng]);
-        }
       });
+
+      this.mapInitialized = true;
+      this.isInitialized = true;
+      console.log('Map ready for user interaction');
 
     } catch (error) {
       console.error('Error initializing map:', error);
@@ -149,130 +199,274 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private async requestLocationPermission() {
-    try {
-      if (!navigator.geolocation) {
-        this.errorMessage = 'Geolocation is not supported by your browser.';
-        this.useDefaultLocation();
-        return;
-      }
-
-      const permission = await navigator.permissions.query({ name: 'geolocation' });
-      
-      if (permission.state === 'denied') {
-        this.errorMessage = 'Location permission is denied. Please enable it in your browser settings.';
-        this.useDefaultLocation();
-        return;
-      }
-
-      // Always try to get current location, even if we've tried before
-      this.getCurrentLocation();
-    } catch (error) {
-      console.error('Error requesting location permission:', error);
-      this.errorMessage = 'Error requesting location permission. Using default location.';
-      this.useDefaultLocation();
-    }
-  }
-
-  private useDefaultLocation() {
-    this.updateLocation(14.832005, 120.282648);
-    if (this.map && this.marker) {
-      this.marker.setLatLng([14.832005, 120.282648]);
-      this.map.setView([14.832005, 120.282648], 14.5);
-    }
-  }
-
   getCurrentLocation() {
+    if (!this.mapInitialized) {
+      console.error('Map not initialized yet');
+      this.errorMessage = 'Map is not ready. Please wait a moment and try again.';
+      return;
+    }
+
+    console.log('=== Getting Current Location ===');
     this.isLocating = true;
     this.errorMessage = '';
+    this.locationAttempts = 0;
+    this.lastLocation = null;
+    this.forceLocationUpdate = true;
+    this.hasValidLocation = false;
 
-    const options: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0
-    };
+    // Clear any existing location data
+    this.currentLocation = null;
+    this.reportForm.patchValue({
+      latitude: null,
+      longitude: null,
+      location: ''
+    }, { emitEvent: false });
 
+    // Clear any existing watch
+    if (this.locationWatchId) {
+      navigator.geolocation.clearWatch(this.locationWatchId);
+      this.locationWatchId = null;
+    }
+
+    console.log('Requesting location with options:', this.GEOLOCATION_OPTIONS);
+
+    // Try to get a fresh location
     navigator.geolocation.getCurrentPosition(
       (position) => {
         this.ngZone.run(() => {
-          console.log('Received GPS coordinates:', position.coords);
-          
-          const newLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-
-          // Update the current location
-          this.currentLocation = newLocation;
-
-          // Ensure map and marker exist
-          if (this.map && this.marker) {
-            // Update marker position
-            this.marker.setLatLng([newLocation.lat, newLocation.lng]);
-            
-            // Pan the map to the new location
-            this.map.setView([newLocation.lat, newLocation.lng], 16, {
-              animate: true,
-              duration: 1
-            });
-
-            // Update form values
-            this.updateLocation(newLocation.lat, newLocation.lng);
-          }
-
-          this.isLocating = false;
+          this.handleLocationUpdate(position);
         });
       },
       (error) => {
-        console.error('Geolocation error:', error);
+        console.error('Initial location error:', error);
         this.ngZone.run(() => {
-          this.errorMessage = this.getLocationErrorMessage(error);
-          this.isLocating = false;
-          this.useDefaultLocation();
+          this.handleLocationError(error);
+          // If getCurrentPosition fails, try watchPosition
+          this.startLocationWatch();
         });
       },
-      options
+      this.GEOLOCATION_OPTIONS
     );
   }
 
-  private getLocationErrorMessage(error: GeolocationPositionError): string {
+  private startLocationWatch() {
+    console.log('Starting location watch with options:', this.GEOLOCATION_OPTIONS);
+    
+    this.locationWatchId = navigator.geolocation.watchPosition(
+      (position) => {
+        this.ngZone.run(() => {
+          this.handleLocationUpdate(position);
+        });
+      },
+      (error) => {
+        console.error('Watch position error:', error);
+        this.ngZone.run(() => {
+          this.handleLocationError(error);
+          if (this.locationWatchId) {
+            navigator.geolocation.clearWatch(this.locationWatchId);
+            this.locationWatchId = null;
+          }
+        });
+      },
+      this.GEOLOCATION_OPTIONS
+    );
+  }
+
+  private handleLocationError(error: GeolocationPositionError) {
+    console.error('Location error:', error);
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        return 'Location access denied. Please enable location services in your browser settings and click the refresh button.';
+        this.errorMessage = 'Location access denied. Please enable location services in your browser settings.';
+        break;
       case error.POSITION_UNAVAILABLE:
-        return 'Location information is unavailable. Please try again.';
+        this.errorMessage = 'Location information is unavailable. Please check your device\'s GPS and try again.';
+        break;
       case error.TIMEOUT:
-        return 'Location request timed out. Please try again.';
+        this.errorMessage = 'Location request timed out. Please check your internet connection and try again.';
+        break;
       default:
-        return 'An error occurred while getting your location. Please try again.';
+        this.errorMessage = 'An error occurred while getting your location. Please try again.';
+    }
+    this.isLocating = false;
+    this.cdr.detectChanges();
+  }
+
+  private handleLocationUpdate(position: GeolocationPosition) {
+    this.locationAttempts++;
+    console.log(`=== Location Update (Attempt ${this.locationAttempts}) ===`);
+    console.log('Raw position:', position);
+    console.log('Position coords:', position.coords);
+    console.log('Accuracy:', position.coords.accuracy, 'meters');
+    
+    if (position.coords) {
+      const newLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        accuracy: position.coords.accuracy
+      };
+
+      console.log('New coordinates with accuracy:', newLocation);
+      
+      // Check if this is the same as the last location
+      if (this.lastLocation && 
+          Math.abs(this.lastLocation.lat - newLocation.lat) < this.LOCATION_THRESHOLD && 
+          Math.abs(this.lastLocation.lng - newLocation.lng) < this.LOCATION_THRESHOLD) {
+        console.log('Location unchanged from last update');
+        if (this.locationAttempts >= this.MAX_ATTEMPTS) {
+          this.errorMessage = 'Unable to get a different location. Please select your location manually on the map.';
+          this.isLocating = false;
+          if (this.locationWatchId) {
+            navigator.geolocation.clearWatch(this.locationWatchId);
+            this.locationWatchId = null;
+          }
+        }
+        return;
+      }
+
+      this.lastLocation = newLocation;
+      
+      // Check accuracy
+      if (newLocation.accuracy > this.MAX_ACCURACY) {
+        console.log('Location accuracy too low:', newLocation.accuracy, 'meters');
+        if (this.locationAttempts >= this.MAX_ATTEMPTS) {
+          this.errorMessage = 'Unable to get accurate location. Please select your location manually on the map.';
+          this.isLocating = false;
+          if (this.locationWatchId) {
+            navigator.geolocation.clearWatch(this.locationWatchId);
+            this.locationWatchId = null;
+          }
+        }
+        return;
+      }
+
+      // Only update if we have valid coordinates
+      if (this.isValidCoordinates(newLocation.lat, newLocation.lng)) {
+        // Clear the watch since we got a valid location
+        if (this.locationWatchId) {
+          navigator.geolocation.clearWatch(this.locationWatchId);
+          this.locationWatchId = null;
+        }
+
+        // Update location
+        this.currentLocation = { lat: newLocation.lat, lng: newLocation.lng };
+        this.hasInitialLocation = true;
+        this.hasValidLocation = true;
+        
+        // Update map and marker
+        if (this.map) {
+          console.log('Updating map with new location...');
+          
+          // Remove existing marker if any
+          if (this.marker) {
+            console.log('Removing existing marker...');
+            this.map.removeLayer(this.marker);
+            this.marker = null;
+          }
+
+          // Create new marker
+          console.log('Creating new marker at:', newLocation);
+          this.marker = L.marker([newLocation.lat, newLocation.lng], {
+            draggable: true,
+            icon: L.divIcon({
+              className: 'custom-marker',
+              html: '<div style="background-color: #4CAF50; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>',
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            })
+          }).addTo(this.map);
+
+          // Add marker drag event
+          this.marker.on('dragend', (event: L.DragEndEvent) => {
+            const position = event.target.getLatLng();
+            console.log('Marker dragged to:', position);
+            this.updateLocation(position.lat, position.lng);
+          });
+
+          // Center map on new location with animation
+          console.log('Centering map on new location...');
+          this.map.flyTo([newLocation.lat, newLocation.lng], 16, {
+            duration: 1.5
+          });
+        }
+
+        // Update form values
+        this.updateLocation(newLocation.lat, newLocation.lng);
+        this.isLocating = false;
+        this.forceLocationUpdate = false;
+        this.cdr.detectChanges();
+      } else {
+        console.error('Invalid coordinates received:', newLocation);
+        if (this.locationAttempts >= this.MAX_ATTEMPTS) {
+          this.errorMessage = 'Invalid location received. Please select your location manually on the map.';
+          this.isLocating = false;
+          if (this.locationWatchId) {
+            navigator.geolocation.clearWatch(this.locationWatchId);
+            this.locationWatchId = null;
+          }
+        }
+      }
     }
   }
 
+  private isValidCoordinates(lat: number, lng: number): boolean {
+    // Check if coordinates are within reasonable bounds
+    const isValidLat = lat >= -90 && lat <= 90;
+    const isValidLng = lng >= -180 && lng <= 180;
+    
+    // Check if coordinates are not zero or near-zero
+    const isNotZero = Math.abs(lat) > 0.0001 && Math.abs(lng) > 0.0001;
+    
+    console.log('Validating coordinates:', { 
+      lat, 
+      lng, 
+      isValidLat, 
+      isValidLng, 
+      isNotZero
+    });
+    
+    return isValidLat && isValidLng && isNotZero;
+  }
+
   private updateLocation(lat: number, lng: number) {
+    console.log('=== Updating Location ===');
+    console.log('New coordinates:', { lat, lng });
+    
+    // Only update if we have valid coordinates
+    if (!this.isValidCoordinates(lat, lng)) {
+      console.error('Invalid coordinates:', { lat, lng });
+      return;
+    }
+    
+    // Update current location
     this.currentLocation = { lat, lng };
+    this.hasValidLocation = true;
     
     // Update form values
     this.reportForm.patchValue({
       latitude: lat,
       longitude: lng
-    });
+    }, { emitEvent: true });
 
-    // Use OpenStreetMap Nominatim for reverse geocoding
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+    // Get address for the location
+    console.log('Fetching address for coordinates:', { lat, lng });
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
     
     fetch(url, {
       headers: {
-        'Accept-Language': 'en-US,en;q=0.9' // Request English results
+        'Accept-Language': 'en-US,en;q=0.9'
       }
     })
       .then(response => response.json())
       .then(data => {
         if (data.display_name) {
+          console.log('Got address:', data.display_name);
           this.ngZone.run(() => {
             this.reportForm.patchValue({
               location: data.display_name
-            });
+            }, { emitEvent: true });
           });
+        } else {
+          console.log('No address found for coordinates');
         }
       })
       .catch(error => {
@@ -437,6 +631,14 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
 
   async onSubmit() {
     if (this.reportForm.invalid) {
+      console.log('Form is invalid:', {
+        errors: this.reportForm.errors,
+        latitude: this.reportForm.get('latitude')?.errors,
+        longitude: this.reportForm.get('longitude')?.errors,
+        category: this.reportForm.get('category')?.errors,
+        location: this.reportForm.get('location')?.errors,
+        description: this.reportForm.get('description')?.errors
+      });
       this.errorMessage = 'Please fill in all required fields.';
       return;
     }
@@ -508,13 +710,14 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
       this.imagePreview = null;
       
       // Reset map to initial state
-      if (this.map && this.marker) {
-        this.map.setView([14.832, 120.2820], 14.5);
-        this.marker.setLatLng([14.832, 120.2820]);
+      if (this.map) {
+        this.map.setView([this.currentLocation?.lat, this.currentLocation?.lng], 16);
+        this.map.removeLayer(this.marker);
+        this.marker = null;
       }
       
       // Request current location again
-      this.requestLocationPermission();
+      this.getCurrentLocation();
 
       // Show success message
       alert('Report submitted successfully!');
@@ -588,9 +791,17 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
             const lng = parseFloat(location.lon);
             
             // Update map and marker
-            if (this.map && this.marker) {
-              this.map.setView([lat, lng], 15);
-              this.marker.setLatLng([lat, lng]);
+            if (this.map) {
+              this.map.setView([lat, lng], 16);
+              this.marker = L.marker([lat, lng], {
+                draggable: true,
+                icon: L.divIcon({
+                  className: 'custom-marker',
+                  html: '<div style="background-color: #4CAF50; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>',
+                  iconSize: [20, 20],
+                  iconAnchor: [10, 10]
+                })
+              }).addTo(this.map);
               this.updateLocation(lat, lng);
             }
           } else {
@@ -605,5 +816,12 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
           this.isSearching = false;
         }
       });
+  }
+
+  // Add cleanup for location watch
+  ngOnDestroy() {
+    if (this.locationWatchId) {
+      navigator.geolocation.clearWatch(this.locationWatchId);
+    }
   }
 }
