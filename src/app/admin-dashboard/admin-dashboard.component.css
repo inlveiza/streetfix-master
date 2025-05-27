@@ -562,7 +562,8 @@
   }
 
   .reports-title {
-    font-size: 1.8rem;
+    font-size: 25px;
+    margin-right: 50px
   }
 
   .content-wrapper {
