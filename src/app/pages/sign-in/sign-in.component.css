@@ -183,3 +183,40 @@ h2 {
 .signup-link:hover {
     text-decoration: underline;
 }
+
+.about-link {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.about-btn {
+    display: inline-block;
+    background-color: #2D796D;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    margin-top: 8px;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+}
+
+.about-btn:hover, .about-btn:focus {
+    background-color: #236358;
+    color: #fff;
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .about-btn {
+        font-size: 13px;
+        padding: 10px 16px;
+    }
+    .about-link {
+        margin-top: 12px;
+    }
+}

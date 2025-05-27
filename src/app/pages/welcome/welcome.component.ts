@@ -19,6 +19,7 @@ export class WelcomeComponent implements OnInit {
   termsVisible = false;
   aboutVisible = false;
   showError = false;
+  public userFlowHovered = false;
 
   constructor(private router: Router) {}
 

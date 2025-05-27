@@ -44,7 +44,7 @@
   left: 100px;
   right: 0;
   height: 150px;
-  z-index: 999;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -56,17 +56,17 @@
 .nav-container {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 3px;
   margin-right: 100px;
 }
 
 .nav-oval {
   background-color: #3D8D7A;
   border-radius: 25px;
-  padding: 0.4rem;
+  padding: 2.1px;
   display: flex;
   align-items: center;
-  gap: 1.2rem;
+  gap: 1px;
 }
 
 .nav-link {
@@ -582,42 +582,7 @@
 }
 
 @media (max-width: 900px) {
-  .primary-header {
-    width: 210px;
-    height: 230px;
-    top: -20px;
-    left: -75px;
-  }
-  .logo-oval {
-    width: 60px;
-    height: 60px;
-  }
-  .nav-container {
-    margin-right: 0px;
-  }
-
-  .reports-title {
-    margin-right: 0px;
-  }   
-
-  .logo {
-    width: 100px;
-    height: 100px;
-  }
-  .secondary-header {
-    left: 80px;
-    height: 120px;
-    border-radius: 0 0 50px 150px;
-  }
-  .nav-link {
-    padding: 0.4rem 1rem;
-    font-size: 0.9rem;
-  }
-  .reports-title {
-    font-size: 1.8rem;
-    margin-right: 20px;
-    margin-top: 10px;  
-  }
+  
   .content-wrapper {
     padding: 1rem;
   }
@@ -670,6 +635,26 @@
 }
 
 @media (max-width: 600px) {
+.secondary-header {
+  left: 80px;
+  height: 120px;
+  border-radius: 0 0 50px 150px;
+}
+.nav-container {
+  margin-right: 10px;
+}
+.reports-title {
+  margin: 20px 100px 0 0;
+}
+
+.nav-oval {
+  padding: 2.1px;
+  gap: 1px;
+}
+
+}
+
+@media (max-width: 600px) {
   .primary-header {
     width: 200px;
     height: 230px;
@@ -681,29 +666,27 @@
     height: 60px;
   }
   .nav-container {
-    margin-right: 0px;
+    margin-right: 10px;
   }
-
   .reports-title {
-    margin: 20px 0 0 0;
-  }   
-
+    margin: 20px 100px 0 0;
+  }
   .logo {
     width: 100px;
     height: 100px;
   }
   .secondary-header {
-    left: 65px;
+    left: 50px;
     top: -240px;
     width: 520px;
     height: 400px;
     border-radius: 100%;
     right: -65px;
-    padding: 275px 180px 0 0;
+    padding: 275px 140px 0 0;
   }
   .nav-link {
     padding: 0.4rem 1rem;
-    font-size: 0.9rem;
+    font-size: 13px;
   }
   .reports-title {
     font-size: 1.8rem;

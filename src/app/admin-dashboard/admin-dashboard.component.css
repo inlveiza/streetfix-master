@@ -514,7 +514,7 @@
   }
 
   .logo-container {
-    padding: 100px 0 0 100px;
+    padding: 90px 0 0 105px;
   }
 
   .logo-oval {
@@ -534,16 +534,17 @@
     height: 400px;
     border-radius: 100%;
     right: -65px;
-    padding: 270px 100px 0 0;
+    padding: 270px 150px 0 0;
   }
 
   .nav-container {
     margin-right: 0px;
+    gap: 2px;
   }
 
   .nav-oval {
-    padding: 0.3rem;
-    gap: 1rem;
+    padding: 2.1px;
+    gap: 1px;
   }
 
   .nav-link {
@@ -562,7 +563,8 @@
   }
 
   .reports-title {
-    font-size: 1.8rem;
+    font-size: 25px;
+    margin-right: 10px
   }
 
   .content-wrapper {
