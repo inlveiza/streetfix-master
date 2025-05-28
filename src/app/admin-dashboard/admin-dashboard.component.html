@@ -30,8 +30,36 @@
   (cancel)="onLogoutCancelled()">
 </app-logout-confirmation>
 
+<!-- Loading State -->
+<div class="loading-container" *ngIf="isLoading">
+  <div class="loading-spinner"></div>
+  <p>Loading dashboard...</p>
+</div>
+
 <!-- Main Content -->
-<div class="content-wrapper">
+<div class="content-wrapper" *ngIf="!isLoading">
+  <!-- Category Filter Buttons -->
+  <div class="category-filters">
+    <button 
+      class="filter-button pending" 
+      [class.active]="selectedCategory === 'pending'"
+      (click)="filterReports('pending')">
+      Pending Reports
+    </button>
+    <button 
+      class="filter-button in-progress" 
+      [class.active]="selectedCategory === 'in_progress'"
+      (click)="filterReports('in_progress')">
+      In Progress
+    </button>
+    <button 
+      class="filter-button resolved" 
+      [class.active]="selectedCategory === 'resolved'"
+      (click)="filterReports('resolved')">
+      Resolved
+    </button>
+  </div>
+
   <!-- Reports Overview -->
   <div class="reports-overview">
     <div class="overview-card pending">
@@ -48,10 +76,52 @@
     </div>
   </div>
 
+  <!-- Mobile Status Groups (hidden on desktop) -->
+  <div class="mobile-status-groups">
+    <div class="status-group pending">
+      <button 
+        class="filter-button pending" 
+        [class.active]="selectedCategory === 'pending'"
+        (click)="filterReports('pending')">
+        Pending Reports
+      </button>
+      <div class="overview-card pending">
+        <h3>Pending Reports</h3>
+        <div class="count">{{ pendingReports.length }}</div>
+      </div>
+    </div>
+
+    <div class="status-group in-progress">
+      <button 
+        class="filter-button in-progress" 
+        [class.active]="selectedCategory === 'in_progress'"
+        (click)="filterReports('in_progress')">
+        In Progress
+      </button>
+      <div class="overview-card in-progress">
+        <h3>In Progress</h3>
+        <div class="count">{{ inProgressReports.length }}</div>
+      </div>
+    </div>
+
+    <div class="status-group resolved">
+      <button 
+        class="filter-button resolved" 
+        [class.active]="selectedCategory === 'resolved'"
+        (click)="filterReports('resolved')">
+        Resolved
+      </button>
+      <div class="overview-card resolved">
+        <h3>Resolved</h3>
+        <div class="count">{{ resolvedReports.length }}</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Reports by Status -->
-  <div class="reports-sections">
+  <div class="reports-sections" *ngIf="selectedCategory">
     <!-- Pending Reports -->
-    <div class="report-section">
+    <div class="report-section" *ngIf="selectedCategory === 'pending'">
       <h2>Pending Reports</h2>
       <div class="reports-list">
         <div class="report-card" *ngFor="let report of pendingReports">
@@ -113,7 +183,7 @@
     </div>
 
     <!-- In Progress Reports -->
-    <div class="report-section">
+    <div class="report-section" *ngIf="selectedCategory === 'in_progress'">
       <h2>In Progress Reports</h2>
       <div class="reports-list">
         <div class="report-card" *ngFor="let report of inProgressReports">
@@ -175,7 +245,7 @@
     </div>
 
     <!-- Resolved Reports -->
-    <div class="report-section">
+    <div class="report-section" *ngIf="selectedCategory === 'resolved'">
       <h2>Resolved Reports</h2>
       <div class="reports-list">
         <div class="report-card" *ngFor="let report of resolvedReports">

@@ -46,7 +46,7 @@
   left: 100px;
   right: 0;
   height: 150px;
-  z-index: 999;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -133,6 +133,14 @@
 /* Content Wrapper */
 .content-wrapper {
   margin: 250px auto;
+  padding: 0 20px;
+  max-width: 1200px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - 250px);
+  display: block;
+  position: relative;
+  z-index: 1;
 }
 
 /* Reports Overview */
@@ -140,37 +148,166 @@
   display: flex;
   justify-content: space-around;
   margin-bottom: 30px;
+  width: 100%;
+}
+
+/* Category Filter Buttons */
+.category-filters {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.filter-button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  width: 30%;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transform: translateZ(0);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.filter-button:hover::before {
+  left: 100%;
+}
+
+.filter-button:hover {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.filter-button.active {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.filter-button.pending {
+  background-color: #ff9800;
+}
+
+.filter-button.pending:hover,
+.filter-button.pending.active {
+  background-color: #f57c00;
+}
+
+.filter-button.in-progress {
+  background-color: #2196f3;
+}
+
+.filter-button.in-progress:hover,
+.filter-button.in-progress.active {
+  background-color: #1976d2;
+}
+
+.filter-button.resolved {
+  background-color: #4caf50;
+}
+
+.filter-button.resolved:hover,
+.filter-button.resolved.active {
+  background-color: #388e3c;
+}
+
+/* Reports Overview */
+.reports-overview {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30px;
+  width: 100%;
 }
 
 .overview-card {
   background-color: #f0f0f0;
-  border-radius: 8px;
-  padding: 15px 20px;
+  border-radius: 12px;
+  padding: 20px;
   text-align: center;
-  width: 30%; /* Adjust as needed */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 30%;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1),
+              0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+  transform: translateZ(0);
+  position: relative;
+  overflow: hidden;
+}
+
+.overview-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, rgba(255,255,255,0.8), rgba(255,255,255,0));
+  transform: translateZ(1px);
+}
+
+.overview-card:hover {
+  transform: translateY(-4px) translateZ(0);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15),
+              0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
 .overview-card h3 {
-  margin-top: 0;
+  margin: 0 0 15px 0;
   color: #333;
+  font-size: 1.1rem;
+  transform: translateZ(2px);
 }
 
 .overview-card .count {
-  font-size: 1.8em;
+  font-size: 2.2em;
   font-weight: bold;
+  transition: all 0.3s ease;
+  transform: translateZ(3px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.overview-card:hover .count {
+  transform: scale(1.15) translateZ(4px);
 }
 
 .overview-card.pending {
-  border-left: 5px solid #ff9800; /* Orange */
+  border-left: 5px solid #ff9800;
+  background: linear-gradient(135deg, #fff 0%, #fff5e6 100%);
 }
 
 .overview-card.in-progress {
-  border-left: 5px solid #2196f3; /* Blue */
+  border-left: 5px solid #2196f3;
+  background: linear-gradient(135deg, #fff 0%, #e3f2fd 100%);
 }
 
 .overview-card.resolved {
-  border-left: 5px solid #4caf50; /* Green */
+  border-left: 5px solid #4caf50;
+  background: linear-gradient(135deg, #fff 0%, #e8f5e9 100%);
 }
 
 /* Reports Sections */
@@ -324,39 +461,64 @@
   gap: 0.5rem;
 }
 
-.status-button {
+.status-controls .status-button {
   padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
+  border: none;
   border-radius: 4px;
-  background-color: #eee;
+  background-color: #3D8D7A;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.2s ease;
-}
-
-.status-button:hover {
-  background-color: #ddd;
-}
-
-.status-button.active {
-  background-color: #3D8D7A;
+  transition: all 0.3s ease;
   color: white;
-  border-color: #3D8D7A;
+  position: relative;
+  overflow: hidden;
 }
 
-.status-button.pending {
-  background-color: #ff9800; /* Orange */
-  color: white;
+.status-controls .status-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.status-button.in_progress {
-  background-color: #2196f3; /* Blue */
-  color: white;
+.status-controls .status-button.active {
+  background-color: #096A53;
+  box-shadow: 0 4px 8px rgba(61, 141, 122, 0.3);
 }
 
-.status-button.resolved {
-  background-color: #4caf50; /* Green */
-  color: white;
+/* Status button colors */
+.status-controls .status-button.pending {
+  background-color: #ff9800;
+}
+
+.status-controls .status-button.pending:hover {
+  background-color: #f57c00;
+}
+
+.status-controls .status-button.pending.active {
+  background-color: #f57c00;
+}
+
+.status-controls .status-button.in_progress {
+  background-color: #2196f3;
+}
+
+.status-controls .status-button.in_progress:hover {
+  background-color: #1976d2;
+}
+
+.status-controls .status-button.in_progress.active {
+  background-color: #1976d2;
+}
+
+.status-controls .status-button.resolved {
+  background-color: #4caf50;
+}
+
+.status-controls .status-button.resolved:hover {
+  background-color: #388e3c;
+}
+
+.status-controls .status-button.resolved.active {
+  background-color: #388e3c;
 }
 
 .timestamp {
@@ -437,6 +599,7 @@
 
   .content-wrapper {
     margin: 150px auto;
+    padding: 0 15px;
   }
 }
 
@@ -501,7 +664,94 @@
   }
 
   .content-wrapper {
-    padding-top: 110px; 
+    margin: 0;
+    padding: 20px 15px;
+    padding-top: 110px;
+  }
+
+  /* Show mobile layout */
+  .mobile-status-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0;
+    margin-bottom: 2rem;
+  }
+
+  .status-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .status-group .filter-button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    padding: 0.8rem;
+    font-size: 1rem;
+  }
+
+  .status-group .overview-card {
+    width: 100%;
+    margin-bottom: 0;
+    box-shadow: none;
+    padding: 0.5rem;
+    background: transparent;
+  }
+
+  .status-group .overview-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+
+  .status-group .overview-card .count {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #333;
+  }
+
+  /* Reports section adjustments */
+  .reports-sections {
+    margin-top: 1rem;
+  }
+
+  .report-section {
+    padding: 0.5rem;
+  }
+
+  .report-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .report-footer-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .status-controls {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .status-controls .status-button {
+    flex: 1;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    min-width: 80px;
+  }
+
+  .timestamp {
+    align-self: flex-end;
   }
 }
 
@@ -564,11 +814,67 @@
 
   .reports-title {
     font-size: 25px;
-    margin-right: 10px
+    margin-right: 10px;
   }
 
   .content-wrapper {
-    padding-top: 90px; 
+    margin: 0;
+    padding: 20px 15px;
+    padding-top: 180px; /* Increased padding to account for header */
+    position: relative;
+    z-index: 1;
+  }
+
+  .mobile-status-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .status-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1;
+  }
+
+  .status-group .filter-button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    padding: 0.8rem;
+    font-size: 1rem;
+  }
+
+  .status-group .overview-card {
+    width: 100%;
+    margin-bottom: 0;
+    box-shadow: none;
+    padding: 0.5rem;
+    background: transparent;
+  }
+
+  /* Hide desktop layout */
+  .category-filters,
+  .reports-overview {
+    display: none;
+  }
+
+  /* Adjust header positioning */
+  .primary-header {
+    z-index: 10;
+  }
+
+  .secondary-header {
+    z-index: 10;
   }
 }
 
@@ -653,39 +959,62 @@
 
 .reports-list .report-card .report-footer-row .status-controls .status-button {
   padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
+  border: none;
   border-radius: 4px;
-  background-color: #eee; /* Default background */
+  background-color: #3D8D7A;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.2s ease;
-  color: #333; /* Ensure text color is visible */
+  transition: all 0.3s ease;
+  color: white;
+  position: relative;
+  overflow: hidden;
 }
 
 .reports-list .report-card .report-footer-row .status-controls .status-button:hover {
-  background-color: #ddd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .reports-list .report-card .report-footer-row .status-controls .status-button.active {
-  background-color: #3D8D7A;
-  color: white;
-  border-color: #3D8D7A;
+  background-color: #096A53;
+  box-shadow: 0 4px 8px rgba(61, 141, 122, 0.3);
 }
 
-/* Explicitly style status buttons within reports-list for color */
+/* Status button colors */
 .reports-list .report-card .report-footer-row .status-controls .status-button.pending {
-  background-color: #ff9800; /* Orange */
-  color: white;
+  background-color: #ff9800;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button.pending:hover {
+  background-color: #f57c00;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button.pending.active {
+  background-color: #f57c00;
 }
 
 .reports-list .report-card .report-footer-row .status-controls .status-button.in_progress {
-  background-color: #2196f3; /* Blue */
-  color: white;
+  background-color: #2196f3;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button.in_progress:hover {
+  background-color: #1976d2;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button.in_progress.active {
+  background-color: #1976d2;
 }
 
 .reports-list .report-card .report-footer-row .status-controls .status-button.resolved {
-  background-color: #4caf50; /* Green */
-  color: white;
+  background-color: #4caf50;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button.resolved:hover {
+  background-color: #388e3c;
+}
+
+.reports-list .report-card .report-footer-row .status-controls .status-button.resolved.active {
+  background-color: #388e3c;
 }
 
 .timestamp {
@@ -709,3 +1038,151 @@
     /* Add margin-top to timestamp if needed for spacing */
   }
 }
+
+/* Responsive styles for filter buttons and overview cards */
+@media (max-width: 768px) {
+  .category-filters {
+    gap: 0.5rem;
+  }
+
+  .filter-button {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .overview-card {
+    padding: 12px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Hide desktop layout */
+  .category-filters,
+  .reports-overview {
+    display: none;
+  }
+
+  /* Show mobile layout */
+  .mobile-status-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .status-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .status-group .filter-button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .status-group .overview-card {
+    width: 100%;
+    margin-bottom: 0;
+    box-shadow: none;
+    padding: 0.5rem;
+  }
+
+  .status-group .overview-card h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .status-group .overview-card .count {
+    font-size: 1.8em;
+  }
+
+  /* Ensure status controls are visible in mobile */
+  .reports-list .report-card .report-footer-row .status-controls {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .reports-list .report-card .report-footer-row .status-controls .status-button {
+    flex: 1;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Mobile Status Groups */
+.mobile-status-groups {
+  display: none;
+  position: relative;
+  z-index: 1;
+}
+
+.status-group {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+
+/* Loading State */
+.loading-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p {
+  color: #3D8D7A;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+/* Ensure mobile status groups are visible by default */
+.mobile-status-groups {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .mobile-status-groups {
+    display: flex;
+  }
+  
+  .category-filters,
+  .reports-overview {
+    display: none;
+  }
+}
+
