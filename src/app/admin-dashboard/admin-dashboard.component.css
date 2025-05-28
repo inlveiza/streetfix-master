@@ -15,7 +15,7 @@
   width: 250px;
   height: 240px;
   border-radius: 100%;
-  z-index: 1000;
+  z-index: 2000;
   display: flex;
   align-items: flex-start;
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
@@ -565,6 +565,7 @@
     height: 230px;
     top: -20px;
     left: -75px;
+    z-index: 2000;
   }
   .logo-oval {
     width: 60px;
@@ -609,6 +610,7 @@
     height: 230px;
     top: -20px;
     left: -75px;
+    z-index: 2000;
   }
 
   .logo-container {
@@ -761,6 +763,7 @@
     height: 230px;
     top: -20px;
     left: -75px;
+    z-index: 2000;
   }
 
   .logo-container {
@@ -814,13 +817,13 @@
 
   .reports-title {
     font-size: 25px;
-    margin-right: 10px;
+    margin-right: 80px;
   }
 
   .content-wrapper {
     margin: 0;
     padding: 20px 15px;
-    padding-top: 180px; /* Increased padding to account for header */
+    padding-top: 200px; /* Increased padding to account for header */
     position: relative;
     z-index: 1;
   }
@@ -836,30 +839,31 @@
   }
 
   .status-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    background: #fff;
-    border-radius: 12px;
-    padding: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    position: relative;
-    z-index: 1;
+    padding: 0.5rem;
+    gap: 0.3rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   }
 
   .status-group .filter-button {
-    width: 100%;
-    margin-bottom: 0.5rem;
-    padding: 0.8rem;
-    font-size: 1rem;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
   }
 
   .status-group .overview-card {
-    width: 100%;
-    margin-bottom: 0;
-    box-shadow: none;
-    padding: 0.5rem;
-    background: transparent;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.95rem;
+    border-radius: 8px;
+  }
+
+  .status-group .overview-card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .status-group .overview-card .count {
+    font-size: 1.3em;
   }
 
   /* Hide desktop layout */
@@ -870,11 +874,36 @@
 
   /* Adjust header positioning */
   .primary-header {
-    z-index: 10;
+    z-index: 300;
   }
 
   .secondary-header {
     z-index: 10;
+  }
+}
+
+@media (max-width: 360px) {
+  .status-group {
+    padding: 0.3rem;
+    gap: 0.15rem;
+    border-radius: 6px;
+  }
+  .status-group .filter-button {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+  }
+  .status-group .overview-card {
+    padding: 0.2rem 0.3rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+  }
+  .status-group .overview-card h3 {
+    font-size: 0.85rem;
+    margin-bottom: 0.2rem;
+  }
+  .status-group .overview-card .count {
+    font-size: 1.1em;
   }
 }
 
