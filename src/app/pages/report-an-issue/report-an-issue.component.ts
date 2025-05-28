@@ -10,6 +10,7 @@ import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CloudinaryService } from '../../services/cloudinary.service';
 import { UserService } from '../../services/user.service';
+import { SuccessDialogComponent } from './success-dialog.component';
 
 interface NominatimResult {
   lat: string;
@@ -25,7 +26,8 @@ interface NominatimResult {
     RouterLink,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule
+    HttpClientModule,
+    SuccessDialogComponent
   ],
   providers: [CloudinaryService, UserService],
   templateUrl: './report-an-issue.component.html',
@@ -65,22 +67,23 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     lat: 14.8733952,
     lng: 120.2782208
   };
-  private readonly MAX_ACCURACY = 100; // Maximum acceptable accuracy in meters
-  private readonly MIN_ACCURACY = 1; // Minimum acceptable accuracy in meters
+  private readonly GEOLOCATION_OPTIONS: PositionOptions = {
+    enableHighAccuracy: false,
+    timeout: 5000,
+    maximumAge: 10000
+  };
+  private readonly MAX_ACCURACY = 500;
+  private readonly MIN_ACCURACY = 0;
+  private readonly MAX_ATTEMPTS = 1;
+  private readonly LOCATION_THRESHOLD = 0.01;
   private isInitialized = false;
   private locationAttempts = 0;
-  private readonly MAX_ATTEMPTS = 3;
   private lastLocation: { lat: number; lng: number; accuracy: number } | null = null;
   private mapInitialized = false;
   private forceLocationUpdate = false;
   private hasValidLocation = false;
   private isFirstLoad = true;
-  private readonly LOCATION_THRESHOLD = 0.0001; // Threshold for considering locations different
-  private readonly GEOLOCATION_OPTIONS: PositionOptions = {
-    enableHighAccuracy: true,
-    timeout: 30000, // Increased timeout to 30 seconds
-    maximumAge: 0
-  };
+  showSuccessDialog = false;
 
   constructor(
     private fb: FormBuilder,
@@ -290,16 +293,24 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     console.error('Location error:', error);
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        this.errorMessage = 'Location access denied. Please enable location services in your browser settings.';
+        this.errorMessage = 'Location access denied. Please enable location services in your browser settings and refresh the page.';
         break;
       case error.POSITION_UNAVAILABLE:
-        this.errorMessage = 'Location information is unavailable. Please check your device\'s GPS and try again.';
+        this.errorMessage = 'Location information is unavailable. This could be due to:\n' +
+          '• GPS signal is blocked (indoors, underground, or in urban canyons)\n' +
+          '• GPS is turned off on your device\n' +
+          '• Poor internet connection\n' +
+          'Please try moving to an open area or select your location manually on the map.';
         break;
       case error.TIMEOUT:
-        this.errorMessage = 'Location request timed out. Please check your internet connection and try again.';
+        this.errorMessage = 'Location request timed out. This could be due to:\n' +
+          '• Slow GPS signal acquisition\n' +
+          '• Poor internet connection\n' +
+          '• Device GPS hardware issues\n' +
+          'Please try again or select your location manually on the map.';
         break;
       default:
-        this.errorMessage = 'An error occurred while getting your location. Please try again.';
+        this.errorMessage = 'An error occurred while getting your location. Please try again or select your location manually on the map.';
     }
     this.isLocating = false;
     this.cdr.detectChanges();
@@ -327,7 +338,11 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
           Math.abs(this.lastLocation.lng - newLocation.lng) < this.LOCATION_THRESHOLD) {
         console.log('Location unchanged from last update');
         if (this.locationAttempts >= this.MAX_ATTEMPTS) {
-          this.errorMessage = 'Unable to get a different location. Please select your location manually on the map.';
+          this.errorMessage = 'Unable to get a different location. This could be due to:\n' +
+            '• Device is stationary\n' +
+            '• GPS signal is weak\n' +
+            '• Location services are not updating\n' +
+            'Please select your location manually on the map.';
           this.isLocating = false;
           if (this.locationWatchId) {
             navigator.geolocation.clearWatch(this.locationWatchId);
@@ -343,7 +358,12 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
       if (newLocation.accuracy > this.MAX_ACCURACY) {
         console.log('Location accuracy too low:', newLocation.accuracy, 'meters');
         if (this.locationAttempts >= this.MAX_ATTEMPTS) {
-          this.errorMessage = 'Unable to get accurate location. Please select your location manually on the map.';
+          this.errorMessage = 'Unable to get accurate location. This could be due to:\n' +
+            '• GPS signal is weak or blocked\n' +
+            '• Device is indoors or underground\n' +
+            '• Poor internet connection\n' +
+            '• Device GPS hardware limitations\n' +
+            'Please move to an open area or select your location manually on the map.';
           this.isLocating = false;
           if (this.locationWatchId) {
             navigator.geolocation.clearWatch(this.locationWatchId);
@@ -735,11 +755,8 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
       // Request current location again
       this.getCurrentLocation();
 
-      // Show success message
-      alert('Report submitted successfully!');
-
-      // Reload the page and redirect to reports dashboard
-      window.location.href = '/reports';
+      // Show success dialog instead of alert
+      this.showSuccessDialog = true;
 
     } catch (error: any) {
       console.error('=== Error Details ===');
@@ -753,6 +770,11 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     } finally {
       this.isSubmitting = false;
     }
+  }
+
+  onSuccessDialogConfirm() {
+    this.showSuccessDialog = false;
+    window.location.href = '/reports';
   }
 
   private async ensureUserDocument() {
