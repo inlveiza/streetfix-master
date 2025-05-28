@@ -257,7 +257,7 @@
 .feature-icons {
     display: flex;
     justify-content: center;
-    gap: 24px;
+    gap: 15px;
     margin-bottom: 40px;
     padding: 0 20px;
     width: 100%;
@@ -598,7 +598,7 @@
 
     .feature-icons {
         max-width: 900px;
-        gap: 30px;
+        gap: 0px;
         margin-bottom: 60px;
     }
 
