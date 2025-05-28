@@ -1,14 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, NgZone, OnInit, ViewChild, inject } from '@angular/core';
-import { FirebaseError } from '@angular/fire/app';
 import { Auth } from '@angular/fire/auth';
-import { Firestore, addDoc, collection, doc, getDoc, setDoc } from '@angular/fire/firestore';
+import { Firestore } from '@angular/fire/firestore';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { User } from '../../interfaces/user.interface';
+import { AuthService } from '../../services/auth.service';
 import { CloudinaryService } from '../../services/cloudinary.service';
+import { ReportService } from '../../services/report.service';
 import { UserService } from '../../services/user.service';
 import { SuccessDialogComponent } from './success-dialog.component';
 
@@ -43,6 +45,7 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   @ViewChild('canvasElement') canvasElement!: ElementRef<HTMLCanvasElement>;
   
   reportForm: FormGroup;
+  user: User | null = null;
   username: string = 'User';
   currentLocation: { lat: number; lng: number } | null = null;
   private hasInitialLocation: boolean = false;
@@ -68,14 +71,14 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     lng: 120.2782208
   };
   private readonly GEOLOCATION_OPTIONS: PositionOptions = {
-    enableHighAccuracy: false,
-    timeout: 5000,
-    maximumAge: 10000
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0
   };
   private readonly MAX_ACCURACY = 500;
   private readonly MIN_ACCURACY = 0;
-  private readonly MAX_ATTEMPTS = 1;
-  private readonly LOCATION_THRESHOLD = 0.01;
+  private readonly MAX_ATTEMPTS = 3;
+  private readonly LOCATION_THRESHOLD = 0.0001;
   private isInitialized = false;
   private locationAttempts = 0;
   private lastLocation: { lat: number; lng: number; accuracy: number } | null = null;
@@ -84,21 +87,39 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
   private hasValidLocation = false;
   private isFirstLoad = true;
   showSuccessDialog = false;
+  selectedFiles: File[] = [];
+  previewUrls: string[] = [];
+  maxFileSize: number = 5 * 1024 * 1024; // 5MB
+  maxFiles: number = 5;
+  allowedFileTypes: string[] = ['image/jpeg', 'image/png', 'image/gif'];
+  private readonly ACCURACY_THRESHOLD = 100;
+  private readonly ACCURACY_IMPROVEMENT_THRESHOLD = 1000;
+  private readonly MIN_ACCURACY_IMPROVEMENT = 100;
+  private readonly ACCURACY_WARNING_THRESHOLD = 200;
+  private lastAccuracy: number | null = null;
+  private locationAccuracy: number | null = null;
+  private isLowAccuracy: boolean = false;
+  private searchQuery = '';
 
   constructor(
     private fb: FormBuilder,
     private ngZone: NgZone,
     private cloudinaryService: CloudinaryService,
     private userService: UserService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private reportService: ReportService,
+    private router: Router,
+    private authService: AuthService
   ) {
     this.reportForm = this.fb.group({
+      title: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100)]],
+      description: ['', [Validators.required, Validators.minLength(20), Validators.maxLength(1000)]],
       category: ['', Validators.required],
-      location: ['', Validators.required],
-      description: ['', [Validators.required, Validators.minLength(10)]],
+      priority: ['medium', Validators.required],
+      address: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
       latitude: [null, [Validators.required, Validators.min(-90), Validators.max(90)]],
       longitude: [null, [Validators.required, Validators.min(-180), Validators.max(180)]],
-      imageUrl: [null]
+      location: ['']
     });
 
     // Subscribe to form value changes for debugging
@@ -151,6 +172,15 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         console.error('Error fetching user data:', error);
       }
     }
+
+    // Check if user is authenticated
+    if (!this.userService.isAuthenticated()) {
+      this.router.navigate(['/sign-in']);
+    }
+
+    this.authService.getCurrentUser().subscribe(user => {
+      this.user = user;
+    });
   }
 
   ngAfterViewInit() {
@@ -177,7 +207,13 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
 
       console.log('Initializing map...');
       
-      // Initialize map with a default view of the Philippines
+      // Create bounds for Olongapo City
+      const olongapoBounds = L.latLngBounds(
+        [this.OLONGAPO_BOUNDS.south, this.OLONGAPO_BOUNDS.west],
+        [this.OLONGAPO_BOUNDS.north, this.OLONGAPO_BOUNDS.east]
+      );
+      
+      // Initialize map with strict bounds
       this.map = L.map(this.mapContainer.nativeElement, {
         zoomControl: true,
         attributionControl: true,
@@ -187,28 +223,99 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         doubleClickZoom: true,
         boxZoom: true,
         keyboard: true,
-        center: [12.8797, 121.7740], // Center of Philippines
-        zoom: 6
+        center: [14.8386, 120.2847], // Olongapo City center
+        zoom: 13,
+        minZoom: 12, // Increased minimum zoom to keep focus on Olongapo
+        maxZoom: 19,
+        maxBounds: olongapoBounds, // Restrict panning to Olongapo
+        maxBoundsViscosity: 1.0 // Prevent panning outside bounds
       });
 
-      console.log('Map initialized, adding tile layer...');
-
-      // Add tile layer
+      // Add tile layer with error handling
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
+        maxZoom: 19,
+        subdomains: 'abc',
+        bounds: olongapoBounds // Restrict tile loading to Olongapo
       }).addTo(this.map);
+
+      // Add controls
+      L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+      L.control.scale({ imperial: false, position: 'bottomright' }).addTo(this.map);
+
+      // Add Olongapo City boundary with more visible styling
+      L.rectangle(olongapoBounds, {
+        color: "#ff7800",
+        weight: 3,
+        fillOpacity: 0.1,
+        dashArray: '5, 5'
+      }).addTo(this.map);
+
+      // Add a label for Olongapo City
+      L.marker([14.8386, 120.2847]).addTo(this.map)
+        .bindPopup('Olongapo City, Zambales')
+        .openPopup();
+
+      // Enable locate control with restricted bounds
+      this.map.locate({
+        setView: true,
+        maxZoom: 16,
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+        bounds: olongapoBounds
+      });
+
+      // Handle location found event
+      this.map.on('locationfound', (e: L.LocationEvent) => {
+        console.log('Location found:', e);
+        this.handleLocationUpdate({
+          coords: {
+            latitude: e.latlng.lat,
+            longitude: e.latlng.lng,
+            accuracy: e.accuracy,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null
+          },
+          timestamp: Date.now()
+        } as GeolocationPosition);
+      });
+
+      // Handle location error event
+      this.map.on('locationerror', (e: L.ErrorEvent) => {
+        console.error('Location error:', e);
+        this.handleLocationError({
+          code: e.code,
+          message: e.message,
+          PERMISSION_DENIED: 1,
+          POSITION_UNAVAILABLE: 2,
+          TIMEOUT: 3
+        } as GeolocationPositionError);
+      });
 
       // Add click event to map
       this.map.on('click', (event: L.LeafletMouseEvent) => {
         const { lat, lng } = event.latlng;
-        console.log('Map clicked at:', { lat, lng });
-        this.updateLocation(lat, lng);
+        if (this.isWithinOlongapo(lat, lng)) {
+          this.updateLocation(lat, lng);
+          this.isLowAccuracy = false;
+          this.locationAccuracy = 10;
+        } else {
+          this.errorMessage = 'Please select a location within Olongapo City, Zambales.';
+        }
+      });
+
+      // Prevent zooming out too far
+      this.map.on('zoomend', () => {
+        if (this.map && this.map.getZoom() < 12) {
+          this.map.setZoom(12);
+        }
       });
 
       this.mapInitialized = true;
-      this.isInitialized = true;
-      console.log('Map ready for user interaction');
+      console.log('Map initialized successfully');
 
     } catch (error) {
       console.error('Error initializing map:', error);
@@ -293,24 +400,35 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     console.error('Location error:', error);
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        this.errorMessage = 'Location access denied. Please enable location services in your browser settings and refresh the page.';
+        this.errorMessage = 'Location access denied. Please:\n' +
+          '• Enable location services in your browser settings\n' +
+          '• Allow location access for this website\n' +
+          '• Or select your location manually on the map';
         break;
       case error.POSITION_UNAVAILABLE:
-        this.errorMessage = 'Location information is unavailable. This could be due to:\n' +
-          '• GPS signal is blocked (indoors, underground, or in urban canyons)\n' +
-          '• GPS is turned off on your device\n' +
-          '• Poor internet connection\n' +
-          'Please try moving to an open area or select your location manually on the map.';
+        this.errorMessage = 'Location information is unavailable. Please:\n' +
+          '• Move to an open area with clear sky view\n' +
+          '• Ensure GPS is enabled on your device\n' +
+          '• Check your internet connection\n' +
+          '• Or select your location manually on the map';
         break;
       case error.TIMEOUT:
-        this.errorMessage = 'Location request timed out. This could be due to:\n' +
-          '• Slow GPS signal acquisition\n' +
-          '• Poor internet connection\n' +
-          '• Device GPS hardware issues\n' +
-          'Please try again or select your location manually on the map.';
+        if (this.locationAttempts < this.MAX_ATTEMPTS) {
+          console.log('Location timeout, trying again...');
+          setTimeout(() => this.getCurrentLocation(), 1000);
+          return;
+        }
+        this.errorMessage = 'Location request timed out. Please:\n' +
+          '• Move to an area with better GPS signal\n' +
+          '• Ensure you have a stable internet connection\n' +
+          '• Or select your location manually on the map';
         break;
       default:
-        this.errorMessage = 'An error occurred while getting your location. Please try again or select your location manually on the map.';
+        this.errorMessage = 'An error occurred while getting your location. Please:\n' +
+          '• Refresh the page\n' +
+          '• Check your device\'s GPS settings\n' +
+          '• Ensure you have a stable internet connection\n' +
+          '• Or select your location manually on the map';
     }
     this.isLocating = false;
     this.cdr.detectChanges();
@@ -318,10 +436,7 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
 
   private handleLocationUpdate(position: GeolocationPosition) {
     this.locationAttempts++;
-    console.log(`=== Location Update (Attempt ${this.locationAttempts}) ===`);
-    console.log('Raw position:', position);
-    console.log('Position coords:', position.coords);
-    console.log('Accuracy:', position.coords.accuracy, 'meters');
+    console.log(`Location update (Attempt ${this.locationAttempts}):`, position);
     
     if (position.coords) {
       const newLocation = {
@@ -330,135 +445,98 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         accuracy: position.coords.accuracy
       };
 
-      console.log('New coordinates with accuracy:', newLocation);
-      
-      // Check if this is the same as the last location
-      if (this.lastLocation && 
-          Math.abs(this.lastLocation.lat - newLocation.lat) < this.LOCATION_THRESHOLD && 
-          Math.abs(this.lastLocation.lng - newLocation.lng) < this.LOCATION_THRESHOLD) {
-        console.log('Location unchanged from last update');
-        if (this.locationAttempts >= this.MAX_ATTEMPTS) {
-          this.errorMessage = 'Unable to get a different location. This could be due to:\n' +
-            '• Device is stationary\n' +
-            '• GPS signal is weak\n' +
-            '• Location services are not updating\n' +
-            'Please select your location manually on the map.';
-          this.isLocating = false;
-          if (this.locationWatchId) {
-            navigator.geolocation.clearWatch(this.locationWatchId);
-            this.locationWatchId = null;
-          }
-        }
-        return;
-      }
+      console.log('New location:', newLocation);
 
-      this.lastLocation = newLocation;
-      
-      // Check accuracy
-      if (newLocation.accuracy > this.MAX_ACCURACY) {
-        console.log('Location accuracy too low:', newLocation.accuracy, 'meters');
-        if (this.locationAttempts >= this.MAX_ATTEMPTS) {
-          this.errorMessage = 'Unable to get accurate location. This could be due to:\n' +
-            '• GPS signal is weak or blocked\n' +
-            '• Device is indoors or underground\n' +
-            '• Poor internet connection\n' +
-            '• Device GPS hardware limitations\n' +
-            'Please move to an open area or select your location manually on the map.';
-          this.isLocating = false;
-          if (this.locationWatchId) {
-            navigator.geolocation.clearWatch(this.locationWatchId);
-            this.locationWatchId = null;
-          }
-        }
-        return;
-      }
-
-      // Only update if we have valid coordinates
-      if (this.isValidCoordinates(newLocation.lat, newLocation.lng)) {
-        // Clear the watch since we got a valid location
-        if (this.locationWatchId) {
-          navigator.geolocation.clearWatch(this.locationWatchId);
-          this.locationWatchId = null;
-        }
-
-        // Update location
-        this.currentLocation = { lat: newLocation.lat, lng: newLocation.lng };
-        this.hasInitialLocation = true;
-        this.hasValidLocation = true;
-        
-        // Update map and marker
-        if (this.map) {
-          console.log('Updating map with new location...');
-          
-          // Remove existing marker if any
-          if (this.marker) {
-            console.log('Removing existing marker...');
-            this.map.removeLayer(this.marker);
-            this.marker = null;
-          }
-
-          // Create new marker
-          console.log('Creating new marker at:', newLocation);
-          this.marker = L.marker([newLocation.lat, newLocation.lng], {
-            draggable: true,
-            icon: L.divIcon({
-              className: 'custom-marker',
-              html: '<div style="background-color: #4CAF50; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>',
-              iconSize: [20, 20],
-              iconAnchor: [10, 10]
-            })
-          }).addTo(this.map);
-
-          // Add marker drag event
-          this.marker.on('dragend', (event: L.DragEndEvent) => {
-            const position = event.target.getLatLng();
-            console.log('Marker dragged to:', position);
-            this.updateLocation(position.lat, position.lng);
-          });
-
-          // Center map on new location with animation
-          console.log('Centering map on new location...');
-          this.map.flyTo([newLocation.lat, newLocation.lng], 16, {
-            duration: 1.5
-          });
-        }
-
-        // Update form values
-        this.updateLocation(newLocation.lat, newLocation.lng);
+      // Check if location is within Olongapo City
+      if (!this.isWithinOlongapo(newLocation.lat, newLocation.lng)) {
+        this.errorMessage = 'Your location is outside Olongapo City, Zambales. ' +
+          'Please ensure you are within the city limits or select a location on the map.';
         this.isLocating = false;
-        this.forceLocationUpdate = false;
-        this.cdr.detectChanges();
+        return;
+      }
+
+      // Store accuracy
+      this.locationAccuracy = newLocation.accuracy;
+      this.isLowAccuracy = newLocation.accuracy > this.ACCURACY_WARNING_THRESHOLD;
+
+      // If accuracy is too low and we haven't reached max attempts, try again
+      if (newLocation.accuracy > this.MAX_ACCURACY && this.locationAttempts < this.MAX_ATTEMPTS) {
+        console.log(`Accuracy too low (${newLocation.accuracy}m), trying again...`);
+        setTimeout(() => this.getCurrentLocation(), 1000);
+        return;
+      }
+
+      // Update location
+      this.currentLocation = { lat: newLocation.lat, lng: newLocation.lng };
+      
+      // Update map if it's initialized
+      if (this.mapInitialized && this.map) {
+        this.updateMapWithLocation(this.currentLocation);
       } else {
-        console.error('Invalid coordinates received:', newLocation);
-        if (this.locationAttempts >= this.MAX_ATTEMPTS) {
-          this.errorMessage = 'Invalid location received. Please select your location manually on the map.';
-          this.isLocating = false;
-          if (this.locationWatchId) {
-            navigator.geolocation.clearWatch(this.locationWatchId);
-            this.locationWatchId = null;
-          }
-        }
+        console.error('Map not initialized when trying to update location');
+        this.initializeMap();
+      }
+
+      // Update form values
+      this.updateLocation(newLocation.lat, newLocation.lng);
+      this.isLocating = false;
+      this.cdr.detectChanges();
+
+      // Show accuracy message
+      if (this.isLowAccuracy) {
+        this.errorMessage = `Note: Location accuracy is ${Math.round(newLocation.accuracy)} meters. ` +
+          'For better accuracy:\n' +
+          '• Move to an open area with clear sky view\n' +
+          '• Ensure GPS is enabled on your device\n' +
+          '• Or manually select your location on the map';
       }
     }
   }
 
-  private isValidCoordinates(lat: number, lng: number): boolean {
-    // Check if coordinates are within reasonable bounds
-    const isValidLat = lat >= -90 && lat <= 90;
-    const isValidLng = lng >= -180 && lng <= 180;
-    
-    // Check if coordinates are not zero or near-zero
-    const isNotZero = Math.abs(lat) > 0.0001 && Math.abs(lng) > 0.0001;
-    
-    console.log('Validating coordinates:', { 
-      lat, 
-      lng, 
-      isValidLat, 
-      isValidLng, 
-      isNotZero
+  private updateMapWithLocation(location: L.LatLng) {
+    if (!this.map) return;
+
+    console.log('Updating map with location:', location);
+
+    // Remove existing marker
+    if (this.marker) {
+      this.map.removeLayer(this.marker);
+      this.marker = null;
+    }
+
+    // Create new marker
+    this.marker = L.marker([location.lat, location.lng], {
+      draggable: true
+    }).addTo(this.map);
+
+    // Add marker drag event
+    this.marker.on('dragend', (event: L.DragEndEvent) => {
+      const position = event.target.getLatLng();
+      this.updateLocation(position.lat, position.lng);
+      this.isLowAccuracy = false;
+      this.locationAccuracy = 10;
     });
-    
-    return isValidLat && isValidLng && isNotZero;
+
+    // Calculate zoom level based on accuracy
+    let zoomLevel = 16;
+    if (this.locationAccuracy) {
+      if (this.locationAccuracy > 100000) zoomLevel = 8;
+      else if (this.locationAccuracy > 10000) zoomLevel = 10;
+      else if (this.locationAccuracy > 1000) zoomLevel = 12;
+      else if (this.locationAccuracy > 100) zoomLevel = 14;
+    }
+
+    // Center map
+    this.map.flyTo([location.lat, location.lng], zoomLevel, {
+      duration: 1.5
+    });
+  }
+
+  private isWithinOlongapo(lat: number, lng: number): boolean {
+    return lat >= this.OLONGAPO_BOUNDS.south &&
+           lat <= this.OLONGAPO_BOUNDS.north &&
+           lng >= this.OLONGAPO_BOUNDS.west &&
+           lng <= this.OLONGAPO_BOUNDS.east;
   }
 
   private updateLocation(lat: number, lng: number) {
@@ -487,7 +565,8 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     
     fetch(url, {
       headers: {
-        'Accept-Language': 'en-US,en;q=0.9'
+        'Accept-Language': 'en-US,en;q=0.9',
+        'User-Agent': 'StreetFix/1.0'
       }
     })
       .then(response => response.json())
@@ -508,358 +587,174 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
       });
   }
 
-  onFileSelected(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (file) {
-      this.selectedImage = file;
-      this.createImagePreview(file);
-      this.uploadImage(file);
-    }
+  private isValidCoordinates(lat: number, lng: number): boolean {
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
   }
 
-  private createImagePreview(file: File) {
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.imagePreview = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
+  onFileSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      const newFiles = Array.from(input.files);
+      
+      // Check if adding new files would exceed the limit
+      if (this.selectedFiles.length + newFiles.length > this.maxFiles) {
+        this.errorMessage = `You can only upload up to ${this.maxFiles} files.`;
+        return;
+      }
 
-  private uploadImage(file: File) {
-    this.isSubmitting = true;
-    this.errorMessage = '';
-
-    this.cloudinaryService.uploadImage(file).subscribe({
-      next: (response: any) => {
-        console.log('=== Image Upload Debug ===');
-        console.log('1. Cloudinary Response:', response);
-        console.log('2. Secure URL:', response.secure_url);
-        
-        // Ensure we have a valid URL
-        if (!response.secure_url) {
-          console.error('No secure_url in Cloudinary response');
-          this.errorMessage = 'Failed to get image URL from Cloudinary';
-          this.isSubmitting = false;
+      // Validate each file
+      for (const file of newFiles) {
+        if (!this.allowedFileTypes.includes(file.type)) {
+          this.errorMessage = 'Only JPG, PNG, and GIF files are allowed.';
           return;
         }
-
-        // Update form with the secure URL
-        this.reportForm.patchValue({
-          imageUrl: response.secure_url
-        });
-        
-        console.log('3. Updated form value:', this.reportForm.value);
-        this.isSubmitting = false;
-      },
-      error: (error) => {
-        console.error('Error uploading image:', error);
-        this.errorMessage = 'Failed to upload image. Please try again.';
-        this.isSubmitting = false;
-      }
-    });
-  }
-
-  async captureImage() {
-    try {
-      this.showCamera = true;
-      await this.initializeCamera();
-    } catch (error) {
-      console.error('Error initializing camera:', error);
-      this.errorMessage = 'Error accessing camera. Please make sure you have granted camera permissions.';
-    }
-  }
-
-  private async initializeCamera() {
-    try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+        if (file.size > this.maxFileSize) {
+          this.errorMessage = 'Each file must be less than 5MB.';
+          return;
         }
+      }
+
+      // Add valid files
+      this.selectedFiles.push(...newFiles);
+      this.errorMessage = '';
+
+      // Generate previews
+      newFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.previewUrls.push(e.target.result);
+        };
+        reader.readAsDataURL(file);
       });
-      
-      if (this.videoElement && this.videoElement.nativeElement) {
-        this.videoElement.nativeElement.srcObject = this.stream;
-      }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      throw error;
     }
   }
 
-  async takePhoto() {
-    if (!this.videoElement || !this.canvasElement) return;
-
-    const video = this.videoElement.nativeElement;
-    const canvas = this.canvasElement.nativeElement;
-    const context = canvas.getContext('2d');
-
-    if (!context) return;
-
-    // Set canvas dimensions to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    // Draw the current video frame on the canvas
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // Convert canvas to base64 image
-    const base64Image = canvas.toDataURL('image/jpeg');
-    
-    // Close camera
-    this.closeCamera();
-
-    // Create a File object from the base64 image
-    const byteString = atob(base64Image.split(',')[1]);
-    const mimeString = base64Image.split(',')[0].split(':')[1].split(';')[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    
-    const blob = new Blob([ab], { type: mimeString });
-    const file = new File([blob], 'camera-photo.jpg', { type: mimeString });
-
-    // Handle the captured image
-    this.selectedImage = file;
-    this.createImagePreview(file);
-    await this.uploadImage(file);
+  removeFile(index: number): void {
+    this.selectedFiles.splice(index, 1);
+    this.previewUrls.splice(index, 1);
   }
 
-  closeCamera() {
-    if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
-      this.stream = null;
-    }
-    this.showCamera = false;
-  }
-
-  removeImage() {
-    this.selectedImage = null;
-    this.imagePreview = null;
-    this.reportForm.patchValue({
-      imageUrl: null
-    });
-  }
-
-  private handleError(error: any): string {
-    console.error('Detailed error:', error);
-    
-    if (error instanceof FirebaseError) {
-      console.error('Firebase error code:', error.code);
-      switch (error.code) {
-        case 'permission-denied':
-          return 'Permission denied. Please make sure you have the right permissions.';
-        case 'unauthenticated':
-          return 'You must be logged in to submit a report.';
-        default:
-          return `Firebase error: ${error.message}`;
-      }
-    }
-
-    return error.message || 'An unexpected error occurred. Please try again.';
-  }
-
-  async onSubmit() {
+  async onSubmit(): Promise<void> {
     if (this.reportForm.invalid) {
-      console.log('Form is invalid:', {
-        errors: this.reportForm.errors,
-        latitude: this.reportForm.get('latitude')?.errors,
-        longitude: this.reportForm.get('longitude')?.errors,
-        category: this.reportForm.get('category')?.errors,
-        location: this.reportForm.get('location')?.errors,
-        description: this.reportForm.get('description')?.errors
-      });
-      this.errorMessage = 'Please fill in all required fields.';
-      return;
-    }
-
-    if (!this.auth.currentUser) {
-      this.errorMessage = 'You must be logged in to submit a report.';
+      this.markFormGroupTouched(this.reportForm);
       return;
     }
 
     this.isSubmitting = true;
     this.errorMessage = '';
+    this.successMessage = '';
+    this.isLocating = true;
 
     try {
-      console.log('=== Debug Information ===');
-      console.log('1. Current user:', this.auth.currentUser);
-      console.log('2. User ID:', this.auth.currentUser.uid);
-      console.log('3. User email:', this.auth.currentUser.email);
-      console.log('4. Form values:', this.reportForm.value);
-      console.log('5. Image URL:', this.reportForm.get('imageUrl')?.value);
+      // First get the user's location
+      await new Promise<void>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            this.handleLocationUpdate(position);
+            resolve();
+          },
+          (error) => {
+            this.handleLocationError(error);
+            reject(error);
+          },
+          this.GEOLOCATION_OPTIONS
+        );
+      });
 
-      // First, verify if the user document exists
-      const userDocRef = doc(this.firestore, 'users', this.auth.currentUser.uid);
-      const userDoc = await getDoc(userDocRef);
+      const formData = this.reportForm.value;
+      const user = await this.userService.getCurrentUser();
       
-      console.log('6. User document exists:', userDoc.exists());
-      if (userDoc.exists()) {
-        console.log('7. User document data:', userDoc.data());
-      }
-
-      if (!userDoc.exists()) {
-        console.log('Creating user document...');
-        const newUser = {
-          uid: this.auth.currentUser.uid,
-          email: this.auth.currentUser.email,
-          fullName: '',
-          address: '',
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
-          isActive: true,
-          role: 'user',
-          permissions: ['submit_report'],
-          reportsSubmitted: 0,
-          reportsResolved: 0
-        };
-        await setDoc(userDocRef, newUser);
-        console.log('User document created successfully');
+      if (!user) {
+        throw new Error('User not authenticated');
       }
 
       const reportData = {
-        ...this.reportForm.value,
-        timestamp: new Date(),
+        ...formData,
+        userId: user.uid,
+        userEmail: user.email,
         status: 'pending',
-        userId: this.auth.currentUser.uid,
-        userEmail: this.auth.currentUser.email
+        createdAt: new Date().toISOString(),
+        images: [] as string[]
       };
-      console.log('8. Report data to be saved:', reportData);
 
-      console.log('9. Attempting to save report...');
-      const reportsCollection = collection(this.firestore, 'reports');
-      console.log('10. Collection reference created');
-      
-      const docRef = await addDoc(reportsCollection, reportData);
-      console.log('11. Report saved successfully with ID:', docRef.id);
-      console.log('12. Final report data:', reportData);
-
-      // Reset the map and form after successful submission
-      this.reportForm.reset();
-      this.selectedImage = null;
-      this.imagePreview = null;
-      
-      // Reset map to initial state
-      if (this.map && this.currentLocation) {
-        this.map.setView([this.currentLocation.lat, this.currentLocation.lng], 16);
-        if (this.marker) {
-          this.map.removeLayer(this.marker);
-        }
-        this.marker = null;
+      // Upload images if any
+      if (this.selectedFiles.length > 0) {
+        const uploadPromises = this.selectedFiles.map(file => 
+          this.reportService.uploadImage(file)
+        );
+        reportData.images = await Promise.all(uploadPromises);
       }
-      
-      // Request current location again
-      this.getCurrentLocation();
 
-      // Show success dialog instead of alert
-      this.showSuccessDialog = true;
+      await this.reportService.createReport(reportData);
+      this.successMessage = 'Report submitted successfully!';
+      this.reportForm.reset();
+      this.selectedFiles = [];
+      this.previewUrls = [];
+
+      // Redirect to reports page after 2 seconds
+      setTimeout(() => {
+        this.router.navigate(['/reports']);
+      }, 2000);
 
     } catch (error: any) {
-      console.error('=== Error Details ===');
-      console.error('Error type:', error.constructor.name);
-      if (error instanceof FirebaseError) {
-        console.error('Firebase error code:', error.code);
-        console.error('Firebase error message:', error.message);
-        console.error('Firebase error details:', error);
-      }
-      this.errorMessage = this.handleError(error);
+      this.errorMessage = error.message || 'An error occurred while submitting the report.';
     } finally {
       this.isSubmitting = false;
+      this.isLocating = false;
     }
   }
 
-  onSuccessDialogConfirm() {
-    this.showSuccessDialog = false;
-    window.location.href = '/reports';
-  }
-
-  private async ensureUserDocument() {
-    if (!this.auth.currentUser) return;
-
-    try {
-      const userDocRef = doc(this.firestore, 'users', this.auth.currentUser.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      if (!userDoc.exists()) {
-        console.log('Creating user document...');
-        const newUser = {
-          uid: this.auth.currentUser.uid,
-          email: this.auth.currentUser.email,
-          fullName: '',
-          address: '',
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
-          isActive: true,
-          role: 'user',
-          permissions: ['submit_report'],
-          reportsSubmitted: 0,
-          reportsResolved: 0
-        };
-        await setDoc(userDocRef, newUser);
-        console.log('User document created successfully');
-      } else {
-        console.log('User document already exists');
+  private markFormGroupTouched(formGroup: FormGroup): void {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
       }
-    } catch (error) {
-      console.error('Error ensuring user document:', error);
+    });
+  }
+
+  startLocationSearch() {
+    console.log('Starting location search...');
+    this.isLocating = true;
+    this.errorMessage = '';
+    this.locationAttempts = 0;
+    this.getCurrentLocation();
+  }
+
+  private cleanupMap() {
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+    if (this.marker) {
+      this.marker = null;
     }
   }
 
-  searchLocation(input: HTMLInputElement) {
-    const query = input.value.trim();
-    
-    if (!query) {
-      return;
+  private stopLocationWatch() {
+    if (this.locationWatchId !== null) {
+      navigator.geolocation.clearWatch(this.locationWatchId);
+      this.locationWatchId = null;
     }
+  }
+
+  searchLocation() {
+    if (!this.searchQuery || this.isSearching) return;
 
     this.isSearching = true;
     this.errorMessage = '';
 
-    // Use OpenStreetMap Nominatim API for geocoding
-    this.http.get<NominatimResult[]>(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-      .subscribe({
-        next: (results) => {
-          if (results && results.length > 0) {
-            const location = results[0];
-            const lat = parseFloat(location.lat);
-            const lng = parseFloat(location.lon);
-            
-            // Update map and marker
-            if (this.map) {
-              this.map.setView([lat, lng], 16);
-              this.marker = L.marker([lat, lng], {
-                draggable: true,
-                icon: L.divIcon({
-                  className: 'custom-marker',
-                  html: '<div style="background-color: #4CAF50; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>',
-                  iconSize: [20, 20],
-                  iconAnchor: [10, 10]
-                })
-              }).addTo(this.map);
-              this.updateLocation(lat, lng);
-            }
-          } else {
-            this.errorMessage = 'Location not found. Please try a different search term.';
-          }
-        },
-        error: (error) => {
-          console.error('Error searching location:', error);
-          this.errorMessage = 'Error searching location. Please try again.';
-        },
-        complete: () => {
-          this.isSearching = false;
-        }
-      });
+    // Implement location search using a geocoding service
+    // For now, we'll just show an error
+    this.errorMessage = 'Location search not implemented';
+    this.isSearching = false;
   }
 
-  // Add cleanup for location watch
-  ngOnDestroy() {
-    if (this.locationWatchId) {
-      navigator.geolocation.clearWatch(this.locationWatchId);
-    }
-  }
+  // Olongapo City boundaries with tighter bounds
+  private readonly OLONGAPO_BOUNDS = {
+    north: 14.9167,
+    south: 14.7833,
+    east: 120.3167,
+    west: 120.2333
+  };
 }

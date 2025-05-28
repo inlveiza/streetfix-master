@@ -56,101 +56,115 @@
         </div>
 
         <div class="form-group">
-          <label for="description">Description</label>
-          <textarea
-            id="description"
-            formControlName="description"
-            rows="4"
-            placeholder="Please provide a detailed description of the issue"
-          ></textarea>
-          <div class="error-message" *ngIf="reportForm.get('description')?.errors?.['required'] && reportForm.get('description')?.touched">
-            Description is required
-          </div>
-          <div class="error-message" *ngIf="reportForm.get('description')?.errors?.['minlength'] && reportForm.get('description')?.touched">
-            Description must be at least 10 characters long
+          <label>TITLE<span class="required">*</span></label>
+          <input type="text" formControlName="title" placeholder="Enter a descriptive title">
+          <div class="error-message" *ngIf="reportForm.get('title')?.invalid && reportForm.get('title')?.touched">
+            <span *ngIf="reportForm.get('title')?.errors?.['required']">Title is required</span>
+            <span *ngIf="reportForm.get('title')?.errors?.['minlength']">Title must be at least 5 characters</span>
+            <span *ngIf="reportForm.get('title')?.errors?.['maxlength']">Title must not exceed 100 characters</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label>Image Upload</label>
+          <label>DESCRIPTION<span class="required">*</span></label>
+          <textarea formControlName="description" placeholder="Describe the issue in detail"></textarea>
+          <div class="error-message" *ngIf="reportForm.get('description')?.invalid && reportForm.get('description')?.touched">
+            <span *ngIf="reportForm.get('description')?.errors?.['required']">Description is required</span>
+            <span *ngIf="reportForm.get('description')?.errors?.['minlength']">Description must be at least 20 characters</span>
+            <span *ngIf="reportForm.get('description')?.errors?.['maxlength']">Description must not exceed 1000 characters</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>PRIORITY</label>
+          <select formControlName="priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <!-- Location Section -->
+        <div class="location-section">
+          <h3>LOCATION<span class="required">*</span></h3>
+          
+          <!-- Location Search -->
+          <div class="location-search">
+            <input 
+              type="text" 
+              class="location-search-input"
+              placeholder="Search for a location..."
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="searchLocation()"
+            >
+            <button 
+              class="search-button"
+              (click)="searchLocation()"
+              [disabled]="!searchQuery || isSearching"
+            >
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="isLocating" class="location-loading">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <span>Getting your location...</span>
+          </div>
+
+          <!-- Accuracy Info -->
+          <div class="accuracy-info" *ngIf="locationAccuracy">
+            <span [class.low-accuracy]="isLowAccuracy">
+              Location accuracy: {{ locationAccuracy | number:'1.0-0' }} meters
+            </span>
+          </div>
+
+          <!-- Error Message -->
+          <div class="error-message" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+
+          <!-- Map Container -->
+          <div #mapContainer class="map-container"></div>
+        </div>
+
+        <!-- Photo Upload Section -->
+        <div class="photo-upload-section">
+          <h3>PHOTOS</h3>
           <div class="image-upload-container">
             <div class="upload-options">
               <div class="file-upload">
-                <input
-                  type="file"
-                  id="imageUpload"
+                <input 
+                  type="file" 
+                  id="file-upload" 
+                  multiple 
                   accept="image/*"
-                  (change)="onFileSelected($event)"
-                  [disabled]="isSubmitting"
+                  (change)="onFileSelect($event)"
                 >
-                <label for="imageUpload" class="upload-button">
-                  <i class="fas fa-upload"></i> Choose File
+                <label for="file-upload" class="upload-button">
+                  <i class="fas fa-camera"></i>
+                  Choose Files
                 </label>
               </div>
-              <button
-                type="button"
-                class="capture-button"
-                (click)="captureImage()"
-                [disabled]="isSubmitting"
-              >
-                <i class="fas fa-camera"></i> Take Photo
-              </button>
             </div>
-            
-            <div class="image-preview" *ngIf="imagePreview">
-              <img [src]="imagePreview" alt="Preview">
-              <button
-                type="button"
-                class="remove-image"
-                (click)="removeImage()"
-                [disabled]="isSubmitting"
-              >
-                <i class="fas fa-times"></i>
-              </button>
+            <div class="preview-container" *ngIf="previewUrls.length > 0">
+              <div class="preview-item" *ngFor="let url of previewUrls; let i = index">
+                <img [src]="url" alt="Preview">
+                <button class="remove-button" (click)="removeFile(i)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Location</label>
-          <div class="location-search">
-            <input
-              #searchInput
-              type="text"
-              placeholder="Search for a location..."
-              (keyup.enter)="searchLocation(searchInput)"
-              class="location-search-input"
-            >
-            <button
-              type="button"
-              class="search-button"
-              (click)="searchLocation(searchInput)"
-              [disabled]="isSearching"
-            >
-              <i class="fas" [class.fa-search]="!isSearching" [class.fa-spinner]="isSearching" [class.fa-spin]="isSearching"></i>
-            </button>
-          </div>
-          <div class="map-container" #mapContainer style="height: 400px; width: 100%; border-radius: 8px; overflow: hidden;"></div>
-          <div class="location-controls">
-            <button
-              type="button"
-              class="refresh-location"
-              (click)="getCurrentLocation()"
-              [disabled]="isLocating"
-            >
-              <i class="fas fa-sync-alt" [class.spinning]="isLocating"></i>
-              {{ isLocating ? 'Getting Location...' : 'Refresh Location' }}
-            </button>
-          </div>
-          <div class="error-message" *ngIf="reportForm.get('latitude')?.errors?.['required'] && reportForm.get('latitude')?.touched">
-            Please select a location on the map
-          </div>
-        </div>
-
-        <button
-          type="submit"
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
           class="submit-button"
-          [disabled]="!reportForm.valid || isSubmitting"
+          [disabled]="reportForm.invalid || isSubmitting"
         >
           <span *ngIf="!isSubmitting">Submit Report</span>
           <span *ngIf="isSubmitting">Submitting...</span>
@@ -158,6 +172,12 @@
       </form>
     </div>
   </div>
+
+  <!-- Success Dialog -->
+  <app-success-dialog
+    *ngIf="showSuccessDialog"
+    (confirm)="onSuccessDialogConfirm()"
+  ></app-success-dialog>
 </div>
 
 <!-- Camera Modal -->
@@ -180,9 +200,3 @@
     </div>
   </div>
 </div>
-
-<!-- Success Dialog -->
-<app-success-dialog
-  [show]="showSuccessDialog"
-  (confirm)="onSuccessDialogConfirm()"
-></app-success-dialog>
