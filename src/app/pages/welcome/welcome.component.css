@@ -357,8 +357,8 @@
 /* Mobile styles */
 @media screen and (max-width: 768px) {
     .icon-box {
-        width: 90px;
-        height: 90px;
+        width: 82px;
+        height: 81px;
         border-radius: 18px;
     }
     .icon-box img {
