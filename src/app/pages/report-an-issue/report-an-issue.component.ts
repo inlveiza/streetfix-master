@@ -114,7 +114,7 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     // Check if running on HTTPS
     if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
       console.warn('Application is not running on HTTPS. Geolocation may not work.');
@@ -134,6 +134,20 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
         this.errorMessage = 'Location access denied. Please enable location services in your browser settings.';
       }
     });
+
+    // Get current user and fetch their data
+    const user = this.auth.currentUser;
+    if (user) {
+      try {
+        const userData = await this.userService.getUserData(user.uid);
+        if (userData) {
+          this.username = userData.fullName || user.email?.split('@')[0] || 'User';
+          this.isAdmin = userData.role === 'admin';
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    }
   }
 
   ngAfterViewInit() {
@@ -710,9 +724,11 @@ export class ReportAnIssueComponent implements OnInit, AfterViewInit {
       this.imagePreview = null;
       
       // Reset map to initial state
-      if (this.map) {
-        this.map.setView([this.currentLocation?.lat, this.currentLocation?.lng], 16);
-        this.map.removeLayer(this.marker);
+      if (this.map && this.currentLocation) {
+        this.map.setView([this.currentLocation.lat, this.currentLocation.lng], 16);
+        if (this.marker) {
+          this.map.removeLayer(this.marker);
+        }
         this.marker = null;
       }
       

@@ -65,10 +65,10 @@
 .nav-oval {
   background-color: #3D8D7A;
   border-radius: 25px;
-  padding: 0.4rem;
+  padding: 2.1px;
   display: flex;
   align-items: center;
-  gap: 1.2rem;
+  gap: 1px;
 }
 
 .nav-link {
